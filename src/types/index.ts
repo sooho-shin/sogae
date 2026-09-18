@@ -1,6 +1,9 @@
+export type AvailableRegion = '흑석동' | '서교동' | '합정동' | '홍대' | '신도림';
+
 export interface Session {
   id: string;
-  title: string; // e.g. "토요일 오후 세션", "일요일 저녁 세션"
+  region: AvailableRegion;
+  title: string; // e.g. "토요일 1차 세션 (20대 중후반)"
   date: string; // e.g. "2026.09.20 (토)"
   time: string; // e.g. "14:30 ~ 17:00"
   ageGroup: string; // e.g. "20대 중후반 (남 27-32 / 여 24-30)"
@@ -9,6 +12,14 @@ export interface Session {
   status: '모집중' | '마감임박' | '마감';
   price: number;
   originalPrice: number;
+}
+
+export interface RegionInfo {
+  id: string;
+  name: AvailableRegion;
+  tag: string;
+  desc: string;
+  badge: string;
 }
 
 export interface Review {
@@ -33,23 +44,25 @@ export interface FAQItem {
 }
 
 export interface ApplicationFormData {
-  // Step 1: Session (일정 및 연령대)
+  // Step 1: Session & Region
   sessionId: string;
+  region: AvailableRegion | '';
   sessionTitle: string;
   sessionDate: string;
   sessionTime: string;
   ageGroup: string;
 
-  // Step 2: Personal Info
+  // Step 2: Personal Info & Photo
   name: string;
   gender: 'male' | 'female' | '';
   birthDate: string;
   phone: string;
-  location: string;
+  location: string; // 거주지
   height: string;
   bodyType: string;
   drinking: string;
   smoking: string;
+  profileImage: string | null; // 본인 사진 Data URL
 
   // Step 3: Career & Lifestyle
   jobCategory: string;

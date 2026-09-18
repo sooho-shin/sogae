@@ -1,9 +1,48 @@
-import { Session, Review, FAQItem } from '@/types';
+import { Session, Review, FAQItem, RegionInfo, AvailableRegion } from '@/types';
+
+export const SETTING_REGIONS: RegionInfo[] = [
+  {
+    id: 'reg-heukseok',
+    name: '흑석동',
+    tag: '한강 감성 & 차분한 힐링',
+    desc: '한강 인근의 아늑하고 조용한 프라이빗 공간에서 진솔한 대화',
+    badge: '인기 급상승 🔥',
+  },
+  {
+    id: 'reg-seogyo',
+    name: '서교동',
+    tag: '예술 & 트렌디 감성',
+    desc: '골목 사이 감각적인 프라이빗 공간에서 즐기는 세련된 티타임',
+    badge: '추천 세션 ✨',
+  },
+  {
+    id: 'reg-hapjeong',
+    name: '합정동',
+    tag: '분위기 핫플 & 와인 무드',
+    desc: '당인리 문화거리와 이어지는 도심 속 감성적인 모임 공간',
+    badge: '마감임박 ⚡',
+  },
+  {
+    id: 'reg-hongdae',
+    name: '홍대',
+    tag: '에너지 & 영 프로페셔널',
+    desc: '트렌드를 선도하는 2030 직장인들의 활기찬 만남의 장',
+    badge: '상시 모집 🏆',
+  },
+  {
+    id: 'reg-sindorim',
+    name: '신도림',
+    tag: '교통 요충지 & 퇴근길 핫플',
+    desc: '1·2호선 환승 초역세권! 경기·서울 남서부 직장인들의 원픽',
+    badge: '직장인 선호 1위 💼',
+  },
+];
 
 export const SESSIONS_DATA: Session[] = [
   {
-    id: 'session-sat-1',
-    title: '토요일 1차 세션 (20대 중후반)',
+    id: 'session-heukseok-1',
+    region: '흑석동',
+    title: '흑석동 주말 1차 세션 (20대 중후반)',
     date: '2026.09.20 (토)',
     time: '14:30 ~ 17:00',
     ageGroup: '20대 중후반 (남 27~32세 / 여 24~30세)',
@@ -14,8 +53,9 @@ export const SESSIONS_DATA: Session[] = [
     originalPrice: 60000,
   },
   {
-    id: 'session-sat-2',
-    title: '토요일 2차 세션 (30대 초중반)',
+    id: 'session-seogyo-1',
+    region: '서교동',
+    title: '서교동 주말 2차 세션 (30대 초중반)',
     date: '2026.09.20 (토)',
     time: '18:00 ~ 20:30',
     ageGroup: '30대 초중반 (남 30~36세 / 여 28~34세)',
@@ -26,11 +66,12 @@ export const SESSIONS_DATA: Session[] = [
     originalPrice: 60000,
   },
   {
-    id: 'session-sun-1',
-    title: '일요일 1차 세션 (20대 중후반)',
+    id: 'session-hapjeong-1',
+    region: '합정동',
+    title: '합정동 일요일 세션 (2030 통합 세션)',
     date: '2026.09.21 (일)',
     time: '15:00 ~ 17:30',
-    ageGroup: '20대 중후반 (남 26~31세 / 여 24~29세)',
+    ageGroup: '20대 후반~30대 초반 (남 28~34세 / 여 26~32세)',
     maleSlotsLeft: 3,
     femaleSlotsLeft: 2,
     status: '모집중',
@@ -38,11 +79,12 @@ export const SESSIONS_DATA: Session[] = [
     originalPrice: 60000,
   },
   {
-    id: 'session-sun-2',
-    title: '일요일 2차 세션 (30대 초중반)',
+    id: 'session-hongdae-1',
+    region: '홍대',
+    title: '홍대 일요일 2차 세션 (20대 중후반)',
     date: '2026.09.21 (일)',
     time: '18:30 ~ 21:00',
-    ageGroup: '30대 초중반 (남 31~37세 / 여 28~35세)',
+    ageGroup: '20대 중후반 (남 26~31세 / 여 24~29세)',
     maleSlotsLeft: 2,
     femaleSlotsLeft: 0,
     status: '마감임박',
@@ -50,11 +92,12 @@ export const SESSIONS_DATA: Session[] = [
     originalPrice: 60000,
   },
   {
-    id: 'session-next-sat',
-    title: '다음 주 토요일 세션 (30대 직장인)',
+    id: 'session-sindorim-1',
+    region: '신도림',
+    title: '신도림 주말 저녁 세션 (30대 직장인)',
     date: '2026.09.27 (토)',
-    time: '15:00 ~ 17:30',
-    ageGroup: '30대 초중반 (남 30~36세 / 여 28~34세)',
+    time: '17:30 ~ 20:00',
+    ageGroup: '30대 초중반 (남 31~37세 / 여 28~35세)',
     maleSlotsLeft: 4,
     femaleSlotsLeft: 3,
     status: '모집중',
@@ -62,11 +105,12 @@ export const SESSIONS_DATA: Session[] = [
     originalPrice: 60000,
   },
   {
-    id: 'session-next-sun',
-    title: '다음 주 일요일 세션 (2030 통합)',
+    id: 'session-heukseok-2',
+    region: '흑석동',
+    title: '흑석동 일요일 힐링 세션 (30대 직장인)',
     date: '2026.09.28 (일)',
     time: '16:00 ~ 18:30',
-    ageGroup: '20대 후반~30대 초반 (남 28~35세 / 여 26~33세)',
+    ageGroup: '30대 초중반 (남 30~36세 / 여 28~34세)',
     maleSlotsLeft: 2,
     femaleSlotsLeft: 2,
     status: '모집중',
@@ -81,7 +125,7 @@ export const REVIEWS_DATA: Review[] = [
     author: '김*현 (남, 31세)',
     age: '31세',
     occupation: '대기업 IT 기획자',
-    sessionInfo: '강남 역삼 세션 참가',
+    sessionInfo: '합정동 세션 참가',
     rating: 5,
     title: '데이팅 앱에 지쳐있던 저에게 최고의 선택이었습니다',
     content:
@@ -95,11 +139,11 @@ export const REVIEWS_DATA: Review[] = [
     author: '이*서 (여, 28세)',
     age: '28세',
     occupation: '공기업 연구원',
-    sessionInfo: '홍대 합정 세션 참가',
+    sessionInfo: '서교동 세션 참가',
     rating: 5,
     title: '혼자 가서 걱정했는데 분위기가 너무 편안했어요',
     content:
-      '낯가림이 심해서 혼자 신청하고 전날까지 취소할까 고민했거든요. 근데 라운지 조명도 은은하고 매니저님들이 안내를 차분하게 잘해주셔서 긴장이 싹 풀렸어요. 번호를 그 자리에서 교환하지 않고 비밀 쪽지로 선택하는 방식이라 여성 입장에서 부담이 전혀 없었습니다.',
+      '낯가림이 심해서 혼자 신청하고 전날까지 취소할까 고민했거든요. 조명도 은은하고 매니저님들이 안내를 차분하게 잘해주셔서 긴장이 싹 풀렸어요. 번호를 그 자리에서 교환하지 않고 비밀 쪽지로 선택하는 방식이라 여성 입장에서 부담이 전혀 없었습니다.',
     matched: true,
     date: '2026.09.08',
     badge: '매칭 성공 🥂',
@@ -109,7 +153,7 @@ export const REVIEWS_DATA: Review[] = [
     author: '박*준 (남, 34세)',
     age: '34세',
     occupation: '금융권 재무팀',
-    sessionInfo: '잠실 올림픽공원 세션 참가',
+    sessionInfo: '신도림 세션 참가',
     rating: 5,
     title: '결혼정보회사 상담받고 현타왔는데 소개남녀가 정답이었네요',
     content:
@@ -123,7 +167,7 @@ export const REVIEWS_DATA: Review[] = [
     author: '최*영 (여, 30세)',
     age: '30세',
     occupation: '외국계 마케터',
-    sessionInfo: '을지로 시그니처 세션 참가',
+    sessionInfo: '흑석동 세션 참가',
     rating: 5,
     title: '주변에 소개팅 자리 부탁하기 민망할 때 딱이에요',
     content:
@@ -139,28 +183,28 @@ export const FAQ_DATA: FAQItem[] = [
     category: '참가 자격',
     question: '참가 자격 및 인증 절차는 어떻게 되나요?',
     answer:
-      '소개남녀는 2030 싱글 직장인을 대상으로 하며, 참가 신청 시 명함/사원증/건강보험자격득실확인서 등을 통해 직장 인증과 싱글(미혼) 확인을 100% 거칩니다. 신원이 불분명하거나 기혼자의 참가는 법적으로 엄격히 제한됩니다.',
+      '소개남녀는 2030 싱글 직장인을 대상으로 하며, 참가 신청 시 본인 사진 등록 및 명함/사원증/건강보험자격득실확인서 등을 통해 직장 인증과 싱글(미혼) 확인을 100% 거칩니다. 신원이 불분명하거나 기혼자의 참가는 법적으로 엄격히 제한됩니다.',
   },
   {
     id: 'faq-2',
+    category: '진행 방식',
+    question: '진행 지역은 어디인가요?',
+    answer:
+      '현재 소개남녀는 흑석동, 서교동, 합정동, 홍대, 신도림 등 접근성과 분위기가 검증된 5개 주요 핫스팟 지역에서 정기 세션을 운영하고 있습니다. 참가 확정 시 상세 위치 및 오시는 길이 개별 안내됩니다.',
+  },
+  {
+    id: 'faq-3',
     category: '진행 방식',
     question: '혼자 참여해도 어색하지 않을까요?',
     answer:
       '실제 참가자의 95% 이상이 혼자 신청하십니다. 1:1 독립된 테이블로 배치되며, 전문 연애상담사가 개발한 아이스브레이킹 대화 질문 카드가 제공되어 침묵이나 어색함 없이 자연스럽고 즐겁게 대화를 나누실 수 있습니다.',
   },
   {
-    id: 'faq-3',
+    id: 'faq-4',
     category: '매칭 및 결과',
     question: '현장에서 연락처를 바로 교환해야 하나요?',
     answer:
       '아닙니다! 소개남녀는 참가자 보호를 위해 현장에서의 직접적인 연락처 교환을 지양합니다. 행사가 끝난 뒤 모바일 안심 쪽지 매칭표를 통해 호감 있는 상대 1~3지망을 비밀리에 제출하며, 서로 호감을 표현한 분들에 한해 익일 오전 매니저가 연락처를 전달해 드립니다.',
-  },
-  {
-    id: 'faq-4',
-    category: '진행 방식',
-    question: '행사 복장(드레스코드)은 어떻게 입고 가야 하나요?',
-    answer:
-      '깔끔하고 단정한 깔끔 캐주얼(Smart Casual) 또는 출근 룩을 권장합니다. 남성분은 셔츠/슬랙스/자켓, 여성분은 원피스/블라우스/깔끔한 슬랙스 착용을 추천드리며, 트레이닝복이나 슬리퍼 등은 입장이 제한될 수 있습니다.',
   },
   {
     id: 'faq-5',
@@ -175,7 +219,7 @@ export const TRUST_STATS = [
   { label: '누적 참가자', value: '45,000+', desc: '4년 연속 2030 직장인 선호도 1위' },
   { label: '평균 매칭률', value: '42.8%', desc: '10:10 세션 기준 상호 매칭 결과' },
   { label: '누적 성혼 커플', value: '320쌍+', desc: '소개남녀를 통해 결혼에 골인한 커플' },
-  { label: '매주 참가자', value: '400명+', desc: '서울/경기 주말 정기 세션 운영' },
+  { label: '정기 세션 지역', value: '5개 핫플', desc: '흑석·서교·합정·홍대·신도림' },
 ];
 
 export const HOW_IT_WORKS_STEPS = [
