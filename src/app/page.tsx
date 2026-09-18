@@ -136,11 +136,11 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 3. COMPARISON SECTION: WHY LOVE MATCHING? */}
+      {/* 3. COMPARISON SECTION: WHY SOGAENAMNYEO? */}
       <section className="py-16 md:py-24 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-2xl mx-auto mb-12 md:mb-16 space-y-3">
           <span className="text-xs font-extrabold text-[#623898] uppercase tracking-wider bg-purple-100 px-3 py-1 rounded-full">
-            WHY LOVE MATCHING
+            WHY SOGAENAMNYEO
           </span>
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-neutral-900">
             소개팅 앱과 결정사 사이,
@@ -181,17 +181,17 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Option 2: Love Matching (Hero Card) */}
+          {/* Option 2: Sogaenamnyeo (Hero Card) */}
           <div className="relative bg-gradient-to-b from-purple-50 via-white to-purple-50/50 rounded-2xl p-6 sm:p-8 border-2 border-[#623898] shadow-xl shadow-purple-900/10 flex flex-col justify-between">
             <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-[#623898] text-white text-xs font-black shadow-md">
-              BEST · 러브매칭 로테이션
+              BEST · 소개남녀 로테이션
             </div>
             <div>
               <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-[#623898] to-[#8C52FF] text-white flex items-center justify-center font-bold mb-4 shadow-md shadow-purple-500/30">
                 <Heart className="w-6 h-6 fill-white" />
               </div>
               <h3 className="text-xl font-extrabold text-neutral-900 mb-2">
-                러브매칭 로테이션 소개팅
+                소개남녀 로테이션 소개팅
               </h3>
               <p className="text-xs text-[#623898] font-semibold mb-6">
                 검증된 직장인과 프라이빗 1:1 대화
@@ -302,7 +302,7 @@ export default function HomePage() {
             <div className="space-y-2 text-center md:text-left">
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 text-xs font-semibold text-pink-300">
                 <Coffee className="w-3.5 h-3.5" />
-                <span>러브매칭만의 차별화된 시스템</span>
+                <span>소개남녀만의 차별화된 시스템</span>
               </div>
               <h4 className="text-xl sm:text-2xl font-extrabold">
                 침묵 걱정 NO! 1:1 대화카드 & 비밀 쪽지 매칭
@@ -511,7 +511,7 @@ export default function HomePage() {
             실제 참가자들의 생생한 후기
           </h2>
           <p className="text-neutral-600 text-sm sm:text-base">
-            누적 참가자 45,000명, 320쌍 이상의 성혼을 탄생시킨 러브매칭의 진짜 이야기
+            누적 참가자 45,000명, 320쌍 이상의 성혼을 탄생시킨 소개남녀의 진짜 이야기
           </p>
         </div>
 

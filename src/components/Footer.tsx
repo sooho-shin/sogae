@@ -13,13 +13,13 @@ export default function Footer() {
               <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-[#623898] to-[#E55B7D] flex items-center justify-center text-white">
                 <Heart className="w-4 h-4 fill-white" />
               </div>
-              <span className="text-xl font-black text-white tracking-tight">러브매칭</span>
+              <span className="text-xl font-black text-white tracking-tight">소개남녀</span>
               <span className="text-xs px-2 py-0.5 rounded bg-purple-900/50 text-purple-300 font-semibold">
                 정식 국내결혼중개업 등록
               </span>
             </div>
             <p className="text-xs text-neutral-400 leading-relaxed max-w-md">
-              러브매칭(LOVE MATCHING)은 서울·경기 2030 직장인을 위한 신뢰 기반 오프라인 로테이션 소개팅 플랫폼입니다. 
+              소개남녀는 서울·경기 2030 직장인을 위한 신뢰 기반 오프라인 로테이션 소개팅 플랫폼입니다. 
               불확실한 데이팅 앱과 과도한 결혼정보회사의 대안으로 안전하고 자연스러운 1:1 대화의 장을 제공합니다.
             </p>
             <div className="flex items-center gap-4 text-xs text-neutral-400">
@@ -77,13 +77,13 @@ export default function Footer() {
               <div className="flex items-start gap-2">
                 <MessageCircle className="w-4 h-4 text-yellow-400 shrink-0 mt-0.5" />
                 <div>
-                  <span className="text-neutral-200 font-semibold block">카카오톡 채널 [러브매칭]</span>
+                  <span className="text-neutral-200 font-semibold block">카카오톡 채널 [소개남녀]</span>
                   <span className="text-neutral-500">평일/주말 10:00 ~ 22:00 실시간 상담</span>
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 <Mail className="w-4 h-4 text-purple-400 shrink-0" />
-                <span className="text-neutral-300">contact@lovematching.kr</span>
+                <span className="text-neutral-300">contact@sogaeting.kr</span>
               </div>
               <div className="flex items-start gap-2">
                 <MapPin className="w-4 h-4 text-purple-400 shrink-0 mt-0.5" />
@@ -99,13 +99,13 @@ export default function Footer() {
         <div className="pt-8 border-t border-neutral-800 text-[11px] text-neutral-400 flex flex-col md:flex-row justify-between items-center gap-4">
           <div>
             <p>
-              (주)러브매칭네트웍스 | 대표이사: 대표관리자 | 사업자등록번호: 214-88-02491 | 국내결혼중개업 신고번호: 제2022-서울-0012호
+              (주)소개남녀네트웍스 | 대표이사: 대표관리자 | 사업자등록번호: 214-88-02491 | 국내결혼중개업 신고번호: 제2022-서울-0012호
             </p>
             <p className="mt-1 text-neutral-400">
-              통신판매업신고: 제2022-서울서초-0192호 | 개인정보보호책임자: 러브매칭 운영팀
+              통신판매업신고: 제2022-서울서초-0192호 | 개인정보보호책임자: 소개남녀 운영팀
             </p>
           </div>
-          <p>© 2022-2026 LoveMatching. All rights reserved.</p>
+          <p>© 2022-2026 소개남녀 (Sogaenamnyeo). All rights reserved.</p>
         </div>
       </div>
     </footer>

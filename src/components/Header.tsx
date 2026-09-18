@@ -19,7 +19,7 @@ export default function Header() {
             <div className="flex flex-col">
               <div className="flex items-center gap-1.5">
                 <span className="text-xl md:text-2xl font-black tracking-tight text-neutral-900">
-                  러브매칭
+                  소개남녀
                 </span>
                 <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-purple-100 text-[#623898]">
                   SINCE 2022
