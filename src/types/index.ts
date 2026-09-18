@@ -40,7 +40,7 @@ export interface FAQItem {
   id: string;
   question: string;
   answer: string;
-  category: '참가 자격' | '진행 방식' | '매칭 및 결과' | '환불 및 변경';
+  category: '참가 자격' | '진행 방식' | '매칭 및 결과' | '서비스 이용 안내';
 }
 
 export interface ApplicationFormData {

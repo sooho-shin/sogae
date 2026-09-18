@@ -46,13 +46,13 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/#schedule" className="hover:text-white transition-colors">
-                  이번 주 소개팅 일정
+                <Link href="/#regions" className="hover:text-white transition-colors">
+                  5대 매칭 거점 지역
                 </Link>
               </li>
               <li>
                 <Link href="/apply" className="hover:text-white transition-colors font-semibold text-purple-400">
-                  참가 지원하기 (얼리버드 할인)
+                  1:1 프로필 카드 무료 등록
                 </Link>
               </li>
               <li>
