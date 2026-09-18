@@ -445,10 +445,10 @@ function ApplyFormContent() {
           <div className="space-y-6">
             <div>
               <h2 className="text-lg font-black text-neutral-900 mb-1">
-                STEP 1. 희망 지역 및 세션 일정 선택
+                STEP 1. 희망 지역 일정 선택
               </h2>
               <p className="text-xs text-neutral-500">
-                현재 소개남녀에서 운영 중인 5개 핵심 지역 중 원하시는 지역을 선택해 주세요.
+                현재 소개남녀에서 운영 중인 5개 핵심 지역 중 원하시는 지역의 일정을 선택해 주세요.
               </p>
             </div>
 

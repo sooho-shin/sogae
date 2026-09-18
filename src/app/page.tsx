@@ -371,18 +371,18 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 6. SESSION SCHEDULE WITH REGION FILTER */}
+      {/* 6. REGION SCHEDULE WITH REGION FILTER */}
       <section id="schedule" className="py-16 md:py-24 bg-white border-y border-neutral-200/60">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-2xl mx-auto mb-10 space-y-3">
             <span className="text-xs font-extrabold text-[#623898] uppercase tracking-wider bg-purple-100 px-3 py-1 rounded-full">
-              SESSION SCHEDULE
+              REGION SCHEDULE
             </span>
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-neutral-900">
-              이번 주 소개팅 세션 일정
+              소개남녀 지역 일정
             </h2>
             <p className="text-neutral-600 text-sm sm:text-base">
-              희망하시는 지역과 연령대 세션을 선택하여 신청해 주세요
+              흑석동 · 서교동 · 합정동 · 홍대 · 신도림 등 원하는 지역의 일정을 확인하고 신청해 주세요
               <br className="hidden sm:inline" />
               <span className="text-xs text-neutral-500 font-medium">
                 (상세 모임 장소는 참가 확정자 대상 개별 비밀 안내됩니다)
@@ -391,7 +391,7 @@ export default function HomePage() {
           </div>
 
           {/* Region Filter Buttons */}
-          <div className="flex flex-wrap items-center justify-center gap-2 mb-8">
+          <div className="flex flex-wrap items-center justify-center gap-2 mb-6">
             {['전체', '흑석동', '서교동', '합정동', '홍대', '신도림'].map((region) => (
               <button
                 key={region}
@@ -403,10 +403,41 @@ export default function HomePage() {
                     : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
                 }`}
               >
-                {region}
+                {region === '전체' ? '전체 지역' : `${region} 일정`}
               </button>
             ))}
           </div>
+
+          {/* Active Region Quick Banner */}
+          {selectedRegion !== '전체' && (
+            <div className="max-w-2xl mx-auto mb-8 bg-purple-50/70 border border-purple-200/80 rounded-2xl p-4 flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-[#623898] text-white flex items-center justify-center shrink-0 shadow-sm">
+                  <MapPin className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-black text-neutral-900">
+                      {selectedRegion} 지역 일정
+                    </span>
+                    <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-purple-200 text-[#623898]">
+                      {SETTING_REGIONS.find((r) => r.name === selectedRegion)?.badge}
+                    </span>
+                  </div>
+                  <p className="text-xs text-neutral-600 mt-0.5">
+                    {SETTING_REGIONS.find((r) => r.name === selectedRegion)?.desc}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedRegion('전체')}
+                className="text-xs text-neutral-500 hover:text-neutral-800 underline shrink-0 font-medium"
+              >
+                전체보기
+              </button>
+            </div>
+          )}
 
           {/* Sessions Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -418,7 +449,7 @@ export default function HomePage() {
                 <div>
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-xs font-black px-2.5 py-1 rounded-md bg-purple-100 text-[#623898]">
-                      📍 {session.region}
+                      📍 {session.region} 일정
                     </span>
                     <span
                       className={`text-xs font-bold px-2.5 py-1 rounded-full ${
@@ -487,7 +518,7 @@ export default function HomePage() {
                     href={`/apply?sessionId=${session.id}&region=${encodeURIComponent(session.region)}`}
                     className="px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-white bg-gradient-to-r from-[#623898] to-[#8C52FF] hover:opacity-95 shadow-sm active:scale-95 transition-all"
                   >
-                    신청하기
+                    일정 신청하기
                   </Link>
                 </div>
               </div>

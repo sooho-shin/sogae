@@ -43,7 +43,7 @@ export default function Header() {
               href="/#schedule"
               className="text-sm font-semibold text-neutral-700 hover:text-[#623898] transition-colors"
             >
-              소개팅 일정
+              지역 일정
             </Link>
             <Link
               href="/#trust"
@@ -112,7 +112,7 @@ export default function Header() {
             onClick={() => setMobileMenuOpen(false)}
             className="block py-2 text-base font-semibold text-neutral-800 hover:text-[#623898]"
           >
-            소개팅 일정
+            지역 일정
           </Link>
           <Link
             href="/#trust"
