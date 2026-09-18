@@ -32,7 +32,7 @@ export default function Header() {
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-8">
+          <nav className="hidden md:flex items-center gap-7">
             <Link
               href="/#program"
               className="text-sm font-semibold text-neutral-700 hover:text-[#623898] transition-colors"
@@ -40,10 +40,16 @@ export default function Header() {
               진행 방식
             </Link>
             <Link
-              href="/#schedule"
+              href="/#profile-showcase"
               className="text-sm font-semibold text-neutral-700 hover:text-[#623898] transition-colors"
             >
-              지역 일정
+              프로필 카드
+            </Link>
+            <Link
+              href="/#regions"
+              className="text-sm font-semibold text-neutral-700 hover:text-[#623898] transition-colors"
+            >
+              매칭 지역
             </Link>
             <Link
               href="/#trust"
@@ -73,7 +79,7 @@ export default function Header() {
               className="relative inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full font-bold text-sm text-white bg-gradient-to-r from-[#623898] to-[#8C52FF] hover:from-[#532E82] hover:to-[#7B40EF] shadow-md shadow-purple-900/15 hover:shadow-lg hover:shadow-purple-900/25 active:scale-98 transition-all"
             >
               <Sparkles className="w-4 h-4" />
-              소개팅 참가 신청
+              1:1 프로필 카드 등록
             </Link>
           </div>
 
@@ -108,11 +114,18 @@ export default function Header() {
             진행 방식
           </Link>
           <Link
-            href="/#schedule"
+            href="/#profile-showcase"
             onClick={() => setMobileMenuOpen(false)}
             className="block py-2 text-base font-semibold text-neutral-800 hover:text-[#623898]"
           >
-            지역 일정
+            프로필 카드 예시
+          </Link>
+          <Link
+            href="/#regions"
+            onClick={() => setMobileMenuOpen(false)}
+            className="block py-2 text-base font-semibold text-neutral-800 hover:text-[#623898]"
+          >
+            매칭 지역
           </Link>
           <Link
             href="/#trust"

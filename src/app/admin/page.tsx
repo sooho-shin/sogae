@@ -8,7 +8,6 @@ import {
   KeyRound,
   LogOut,
   Search,
-  Filter,
   RefreshCw,
   Eye,
   CheckCircle2,
@@ -17,16 +16,18 @@ import {
   ChevronLeft,
   ChevronRight,
   MapPin,
-  Briefcase,
   Sparkles,
   Phone,
-  Calendar,
   X,
-  ShieldCheck,
   Heart,
   ChevronDown,
+  MessageCircle,
+  Copy,
+  Send,
+  Share2,
 } from 'lucide-react';
 import { AdminApplication, ApplicationStatus } from '@/types/admin';
+import ProfileCard from '@/components/ProfileCard';
 
 export default function AdminPage() {
   // Authentication State
@@ -51,8 +52,10 @@ export default function AdminPage() {
   const pageSize = 6;
 
   // Modal State
+  const [selectedAppForCard, setSelectedAppForCard] = useState<AdminApplication | null>(null);
   const [selectedAppForDetail, setSelectedAppForDetail] = useState<AdminApplication | null>(null);
   const [selectedPhotoForZoom, setSelectedPhotoForZoom] = useState<string | null>(null);
+  const [copiedText, setCopiedText] = useState<string>('');
 
   // Check login on mount
   useEffect(() => {
@@ -117,6 +120,9 @@ export default function AdminPage() {
         setApplications((prev) =>
           prev.map((app) => (app.id === id ? { ...app, status: newStatus } : app))
         );
+        if (selectedAppForCard && selectedAppForCard.id === id) {
+          setSelectedAppForCard((prev) => (prev ? { ...prev, status: newStatus } : null));
+        }
         if (selectedAppForDetail && selectedAppForDetail.id === id) {
           setSelectedAppForDetail((prev) => (prev ? { ...prev, status: newStatus } : null));
         }
@@ -126,14 +132,25 @@ export default function AdminPage() {
     }
   };
 
+  // Copy text helper
+  const copyToClipboard = (text: string, label: string) => {
+    if (typeof navigator !== 'undefined') {
+      navigator.clipboard.writeText(text);
+      setCopiedText(label);
+      setTimeout(() => setCopiedText(''), 2000);
+    }
+  };
+
   // Filtered applications
   const filteredApps = useMemo(() => {
     return applications.filter((app) => {
-      // Keyword match (name, phone, receiptNumber, job)
+      // Keyword match (name, nickname, kakaoId, phone, receiptNumber, job)
       if (searchKeyword.trim()) {
         const kw = searchKeyword.toLowerCase();
         const matches =
           app.name.toLowerCase().includes(kw) ||
+          (app.nickname || '').toLowerCase().includes(kw) ||
+          (app.kakaoId || '').toLowerCase().includes(kw) ||
           app.phone.includes(kw) ||
           app.receiptNumber.toLowerCase().includes(kw) ||
           (app.jobRole || '').toLowerCase().includes(kw) ||
@@ -178,8 +195,8 @@ export default function AdminPage() {
     return {
       total: applications.length,
       pending: applications.filter((a) => a.status === '심사대기').length,
-      approved: applications.filter((a) => a.status === '승인완료').length,
-      rejected: applications.filter((a) => a.status === '반려').length,
+      proposing: applications.filter((a) => a.status === '매칭제안중').length,
+      matched: applications.filter((a) => a.status === '상호수락(카톡교환)').length,
     };
   }, [applications]);
 
@@ -202,7 +219,7 @@ export default function AdminPage() {
             </div>
             <h1 className="text-2xl font-black text-white">소개남녀 관리자 콘솔</h1>
             <p className="text-xs text-neutral-400">
-              소개팅 지원자 관리 및 심사를 위한 관리자 전용 인증 화면입니다.
+              1:1 소개팅 프로필 카드 발행 및 &lsquo;이분은 어떠신가요?&rsquo; 매칭 관리자 화면입니다.
             </p>
           </div>
 
@@ -277,7 +294,7 @@ export default function AdminPage() {
               <span className="font-black text-lg text-neutral-900">소개남녀</span>
             </Link>
             <span className="text-xs px-2.5 py-0.5 rounded-full bg-purple-100 text-[#623898] font-black border border-purple-200">
-              ADMIN CONSOLE
+              1:1 매칭 ADMIN
             </span>
           </div>
 
@@ -309,7 +326,7 @@ export default function AdminPage() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <div className="bg-white rounded-2xl p-5 border border-neutral-200/80 shadow-xs flex items-center justify-between">
             <div>
-              <p className="text-xs font-bold text-neutral-500 mb-1">총 누적 지원자</p>
+              <p className="text-xs font-bold text-neutral-500 mb-1">총 등록 회원</p>
               <h3 className="text-2xl font-black text-neutral-900">{stats.total}명</h3>
             </div>
             <div className="w-10 h-10 rounded-xl bg-purple-50 text-[#623898] flex items-center justify-center font-bold">
@@ -329,21 +346,21 @@ export default function AdminPage() {
 
           <div className="bg-white rounded-2xl p-5 border border-neutral-200/80 shadow-xs flex items-center justify-between">
             <div>
-              <p className="text-xs font-bold text-emerald-600 mb-1">승인 완료</p>
-              <h3 className="text-2xl font-black text-emerald-600">{stats.approved}명</h3>
+              <p className="text-xs font-bold text-indigo-600 mb-1">매칭 제안 진행중</p>
+              <h3 className="text-2xl font-black text-indigo-600">{stats.proposing}명</h3>
             </div>
-            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
-              <CheckCircle2 className="w-5 h-5" />
+            <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">
+              <Send className="w-5 h-5" />
             </div>
           </div>
 
           <div className="bg-white rounded-2xl p-5 border border-neutral-200/80 shadow-xs flex items-center justify-between">
             <div>
-              <p className="text-xs font-bold text-rose-600 mb-1">반려 / 보류</p>
-              <h3 className="text-2xl font-black text-rose-600">{stats.rejected}명</h3>
+              <p className="text-xs font-bold text-emerald-600 mb-1">상호 수락 (카톡 교환)</p>
+              <h3 className="text-2xl font-black text-emerald-600">{stats.matched}쌍</h3>
             </div>
-            <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center font-bold">
-              <XCircle className="w-5 h-5" />
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+              <MessageCircle className="w-5 h-5" />
             </div>
           </div>
         </div>
@@ -358,7 +375,7 @@ export default function AdminPage() {
                 type="text"
                 value={searchKeyword}
                 onChange={(e) => setSearchKeyword(e.target.value)}
-                placeholder="이름, 연락처, 접수번호, 직무 검색..."
+                placeholder="닉네임, 이름, 카톡ID, 연락처 검색..."
                 className="w-full pl-10 pr-4 py-2 text-xs sm:text-sm bg-neutral-50 border border-neutral-200 rounded-xl focus:outline-none focus:border-[#623898] focus:bg-white transition-colors"
               />
               {searchKeyword && (
@@ -415,7 +432,9 @@ export default function AdminPage() {
                 >
                   <option value="전체">전체 상태</option>
                   <option value="심사대기">심사대기</option>
-                  <option value="승인완료">승인완료</option>
+                  <option value="프로필승인">프로필승인</option>
+                  <option value="매칭제안중">매칭제안중</option>
+                  <option value="상호수락(카톡교환)">상호수락(카톡교환)</option>
                   <option value="반려">반려</option>
                 </select>
               </div>
@@ -427,7 +446,7 @@ export default function AdminPage() {
         <div className="bg-white rounded-2xl border border-neutral-200/80 shadow-xs overflow-hidden">
           <div className="px-6 py-4 border-b border-neutral-200 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <h2 className="font-black text-base text-neutral-900">지원자 접수 명단</h2>
+              <h2 className="font-black text-base text-neutral-900">1:1 소개팅 지원자 명단</h2>
               <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-purple-100 text-[#623898]">
                 검색결과: {filteredApps.length}건
               </span>
@@ -449,13 +468,13 @@ export default function AdminPage() {
                 <thead className="bg-neutral-50/80 text-neutral-500 text-[11px] font-bold border-b border-neutral-200">
                   <tr>
                     <th className="py-3.5 px-4">사진</th>
-                    <th className="py-3.5 px-4">접수번호 / 일시</th>
-                    <th className="py-3.5 px-4">성명 / 성별 / 나이</th>
-                    <th className="py-3.5 px-4">연락처 / 거주지</th>
-                    <th className="py-3.5 px-4">선택 지역 / 세션</th>
-                    <th className="py-3.5 px-4">직무 / 회사</th>
-                    <th className="py-3.5 px-4">MBTI / 취향</th>
-                    <th className="py-3.5 px-4 text-center">심사 상태</th>
+                    <th className="py-3.5 px-4">닉네임 / 실명 / 성별</th>
+                    <th className="py-3.5 px-4">카카오톡 ID (교환용)</th>
+                    <th className="py-3.5 px-4">년생 / 키 / 지역</th>
+                    <th className="py-3.5 px-4">직업 / 직장명</th>
+                    <th className="py-3.5 px-4">체형 / MBTI / 취미</th>
+                    <th className="py-3.5 px-4 text-center">매칭 진행 상태</th>
+                    <th className="py-3.5 px-4 text-center">1:1 프로필 카드</th>
                     <th className="py-3.5 px-4 text-center">상세</th>
                   </tr>
                 </thead>
@@ -469,28 +488,20 @@ export default function AdminPage() {
                             src={app.profileImage}
                             alt={app.name}
                             onClick={() => setSelectedPhotoForZoom(app.profileImage || null)}
-                            className="w-10 h-10 rounded-xl object-cover border border-neutral-200 hover:scale-105 hover:ring-2 hover:ring-[#623898] transition-all cursor-pointer shadow-xs"
+                            className="w-11 h-14 rounded-xl object-cover border border-neutral-200 hover:scale-105 hover:ring-2 hover:ring-[#623898] transition-all cursor-pointer shadow-xs"
                             title="클릭하여 원본 사진 확대"
                           />
                         ) : (
-                          <div className="w-10 h-10 rounded-xl bg-neutral-100 flex items-center justify-center text-neutral-400 text-xs">
+                          <div className="w-11 h-14 rounded-xl bg-neutral-100 flex items-center justify-center text-neutral-400 text-xs">
                             무사진
                           </div>
                         )}
                       </td>
 
-                      {/* Receipt & Applied Time */}
-                      <td className="py-3 px-4">
-                        <span className="font-extrabold text-[#623898] block">
-                          {app.receiptNumber}
-                        </span>
-                        <span className="text-[11px] text-neutral-400 block">{app.appliedAt}</span>
-                      </td>
-
-                      {/* Name, Gender, Age */}
+                      {/* Nickname / Real Name / Gender */}
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-1.5">
-                          <span className="font-bold text-neutral-900">{app.name}</span>
+                          <span className="font-extrabold text-neutral-900">{app.nickname || app.name}</span>
                           <span
                             className={`text-[10px] font-black px-1.5 py-0.5 rounded ${
                               app.gender === 'male'
@@ -502,44 +513,61 @@ export default function AdminPage() {
                           </span>
                         </div>
                         <span className="text-[11px] text-neutral-500 block">
-                          {app.birthDate} ({app.height || '-'})
+                          실명: {app.name} ({app.phone})
                         </span>
                       </td>
 
-                      {/* Phone & Location */}
+                      {/* KakaoTalk ID */}
                       <td className="py-3 px-4">
-                        <span className="font-medium text-neutral-800 block">{app.phone}</span>
+                        <div className="flex items-center gap-1.5 bg-yellow-50/80 px-2.5 py-1 rounded-lg border border-yellow-200 w-fit">
+                          <MessageCircle className="w-3.5 h-3.5 text-yellow-600" />
+                          <span className="font-black text-neutral-900 text-xs">{app.kakaoId || '미기재'}</span>
+                          {app.kakaoId && (
+                            <button
+                              type="button"
+                              onClick={() => copyToClipboard(app.kakaoId, `kakao-${app.id}`)}
+                              className="text-neutral-400 hover:text-neutral-800 p-0.5"
+                              title="카톡 ID 복사"
+                            >
+                              <Copy className="w-3 h-3" />
+                            </button>
+                          )}
+                        </div>
+                        {copiedText === `kakao-${app.id}` && (
+                          <span className="text-[10px] text-emerald-600 font-bold block mt-0.5">복사 완료!</span>
+                        )}
+                      </td>
+
+                      {/* Birth Year / Height / Location */}
+                      <td className="py-3 px-4">
+                        <span className="font-bold text-neutral-900 block">
+                          {app.birthYear || app.birthDate.slice(2, 4)}년생 ({app.height || '-'}cm)
+                        </span>
                         <span className="text-[11px] text-neutral-500 block truncate max-w-[130px]" title={app.location}>
-                          {app.location}
+                          📍 {app.location || app.region}
                         </span>
                       </td>
 
-                      {/* Region & Session */}
+                      {/* Job / Company */}
                       <td className="py-3 px-4">
-                        <span className="text-xs font-black px-2 py-0.5 rounded-md bg-purple-100 text-[#623898] inline-block mb-1">
-                          📍 {app.region}
-                        </span>
-                        <p className="text-[11px] text-neutral-600 line-clamp-1 max-w-[160px]" title={app.sessionTitle}>
-                          {app.sessionTitle}
-                        </p>
-                      </td>
-
-                      {/* Job & Company */}
-                      <td className="py-3 px-4">
-                        <span className="font-medium text-neutral-900 block">{app.jobRole}</span>
+                        <span className="font-bold text-neutral-900 block">{app.jobRole || app.jobCategory}</span>
                         <span className="text-[11px] text-neutral-500 block truncate max-w-[120px]">
-                          {app.companyName || app.jobCategory}
+                          {app.companyName || '(비공개)'}
                         </span>
                       </td>
 
-                      {/* MBTI & Interests */}
+                      {/* Body Feature / MBTI / Hobbies */}
                       <td className="py-3 px-4">
-                        <span className="text-xs font-black text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded mr-1">
-                          {app.mbti || 'MBTI'}
-                        </span>
-                        <span className="text-[11px] text-neutral-500">
-                          {app.interests.slice(0, 2).join(', ')}
-                          {app.interests.length > 2 && ` 외 ${app.interests.length - 2}`}
+                        <div className="flex items-center gap-1 mb-0.5">
+                          <span className="text-[10px] font-black text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded">
+                            {app.mbti || 'MBTI'}
+                          </span>
+                          <span className="text-[10px] font-bold text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded">
+                            {app.bodyTypeFeature || app.bodyType}
+                          </span>
+                        </div>
+                        <span className="text-[11px] text-neutral-500 block truncate max-w-[130px]">
+                          {app.hobbiesSpecialty || app.interests.join(', ')}
                         </span>
                       </td>
 
@@ -550,19 +578,36 @@ export default function AdminPage() {
                             value={app.status}
                             onChange={(e) => handleStatusChange(app.id, e.target.value as ApplicationStatus)}
                             className={`text-xs font-black px-2.5 py-1 rounded-full cursor-pointer border appearance-none pr-6 focus:outline-none ${
-                              app.status === '승인완료'
+                              app.status === '상호수락(카톡교환)'
                                 ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                : app.status === '매칭제안중'
+                                ? 'bg-indigo-50 text-indigo-700 border-indigo-200'
+                                : app.status === '프로필승인'
+                                ? 'bg-purple-50 text-purple-700 border-purple-200'
                                 : app.status === '심사대기'
                                 ? 'bg-amber-50 text-amber-700 border-amber-200'
                                 : 'bg-rose-50 text-rose-700 border-rose-200'
                             }`}
                           >
                             <option value="심사대기">심사대기</option>
-                            <option value="승인완료">승인완료</option>
+                            <option value="프로필승인">프로필승인</option>
+                            <option value="매칭제안중">매칭제안중</option>
+                            <option value="상호수락(카톡교환)">상호수락(카톡교환)</option>
                             <option value="반려">반려</option>
                           </select>
                           <ChevronDown className="w-3 h-3 absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none opacity-50" />
                         </div>
+                      </td>
+
+                      {/* Profile Card View Button */}
+                      <td className="py-3 px-4 text-center">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedAppForCard(app)}
+                          className="px-3 py-1 rounded-lg text-xs font-black text-white bg-gradient-to-r from-[#623898] to-[#E12B70] hover:opacity-90 transition-all shadow-xs"
+                        >
+                          실물 카드 보기
+                        </button>
                       </td>
 
                       {/* Detail View Button */}
@@ -570,9 +615,9 @@ export default function AdminPage() {
                         <button
                           type="button"
                           onClick={() => setSelectedAppForDetail(app)}
-                          className="px-2.5 py-1 rounded-lg text-xs font-bold text-[#623898] bg-purple-50 hover:bg-purple-100 transition-colors"
+                          className="px-2.5 py-1 rounded-lg text-xs font-bold text-neutral-600 bg-neutral-100 hover:bg-neutral-200 transition-colors"
                         >
-                          상세보기
+                          상세
                         </button>
                       </td>
                     </tr>
@@ -587,7 +632,7 @@ export default function AdminPage() {
             <span className="text-xs text-neutral-500 font-medium">
               총 <strong className="text-neutral-900 font-bold">{filteredApps.length}</strong>명 중{' '}
               {filteredApps.length > 0 ? (currentPage - 1) * pageSize + 1 : 0} -{' '}
-              {Math.min(currentPage * pageSize, filteredApps.length)}번째 지원자
+              {Math.min(currentPage * pageSize, filteredApps.length)}번째 회원
             </span>
 
             <div className="flex items-center gap-1.5">
@@ -630,7 +675,91 @@ export default function AdminPage() {
         </div>
       </main>
 
-      {/* ================= 3. PHOTO ZOOM MODAL ================= */}
+      {/* ================= 3. PROFILE CARD PREVIEW MODAL ================= */}
+      {selectedAppForCard && (
+        <div
+          className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
+          onClick={() => setSelectedAppForCard(null)}
+        >
+          <div
+            className="relative max-w-lg w-full bg-white rounded-3xl shadow-2xl border border-neutral-200 overflow-hidden my-8"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="bg-gradient-to-r from-[#352758] to-[#623898] p-5 text-white flex items-center justify-between">
+              <div>
+                <span className="text-xs font-bold text-purple-200">1:1 제안용 프로필 카드 실물</span>
+                <h3 className="text-lg font-black">
+                  {selectedAppForCard.nickname || selectedAppForCard.name}님의 프로필 카드
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedAppForCard(null)}
+                className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 text-white flex items-center justify-center transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Body: ProfileCard itself */}
+            <div className="p-4 sm:p-6 bg-neutral-100 flex justify-center">
+              <ProfileCard data={selectedAppForCard} showWatermark={true} />
+            </div>
+
+            {/* Modal Footer: Quick Kakao Proposal Copy Action */}
+            <div className="p-5 bg-white border-t border-neutral-200 space-y-3">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-bold text-neutral-600">
+                  교환용 카톡 ID: <strong className="text-neutral-900">{selectedAppForCard.kakaoId}</strong>
+                </span>
+                <span className="font-bold text-[#623898]">
+                  현재 상태: {selectedAppForCard.status}
+                </span>
+              </div>
+
+              {/* Copy "이분은 어떠신가요?" proposal template */}
+              <button
+                type="button"
+                onClick={() => {
+                  const msg = `[소개남녀 1:1 매칭 제안]\n안녕하세요, 소개남녀 매니저입니다! 회원님의 이상형 조건에 어울리는 분의 1:1 프로필 카드를 보내드립니다.\n\n이분은 어떠신가요? :)\n\n프로필 카드를 확인해 보시고, 마음에 드시면 'OK'라고 답장 남겨주세요! 두 분 모두 수락하시면 카카오톡 ID를 교환해 드립니다.`;
+                  copyToClipboard(msg, 'proposal-msg');
+                  handleStatusChange(selectedAppForCard.id, '매칭제안중');
+                }}
+                className="w-full py-3 px-4 rounded-xl font-black text-xs sm:text-sm text-white bg-gradient-to-r from-[#623898] to-[#8C52FF] hover:opacity-95 shadow-md flex items-center justify-center gap-2 transition-all active:scale-98"
+              >
+                <Send className="w-4 h-4" />
+                <span>&ldquo;이분은 어떠신가요?&rdquo; 카톡 제안 멘트 복사 &amp; 제안중 전환</span>
+              </button>
+              {copiedText === 'proposal-msg' && (
+                <p className="text-center text-xs text-emerald-600 font-bold animate-fade-in">
+                  ✓ 카톡 제안 멘트가 복사되었습니다! 상대방에게 붙여넣기하여 전송하세요.
+                </p>
+              )}
+
+              {/* Mutual OK Button */}
+              <div className="grid grid-cols-2 gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => handleStatusChange(selectedAppForCard.id, '상호수락(카톡교환)')}
+                  className="py-2.5 rounded-xl font-black text-xs text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition-colors"
+                >
+                  ✓ 상호 수락 (카톡 교환 완료)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleStatusChange(selectedAppForCard.id, '반려')}
+                  className="py-2.5 rounded-xl font-bold text-xs text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 transition-colors"
+                >
+                  ✕ 매칭 반려 / 보류
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ================= 4. PHOTO ZOOM MODAL ================= */}
       {selectedPhotoForZoom && (
         <div
           className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
@@ -656,7 +785,7 @@ export default function AdminPage() {
         </div>
       )}
 
-      {/* ================= 4. APPLICATION DETAIL MODAL ================= */}
+      {/* ================= 5. APPLICATION DETAIL MODAL ================= */}
       {selectedAppForDetail && (
         <div
           className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
@@ -671,7 +800,7 @@ export default function AdminPage() {
               <div>
                 <span className="text-xs font-bold text-purple-200">지원자 상세 심사 카드</span>
                 <h3 className="text-xl font-black">
-                  {selectedAppForDetail.name} ({selectedAppForDetail.gender === 'male' ? '남성' : '여성'})
+                  {selectedAppForDetail.nickname} ({selectedAppForDetail.name}, {selectedAppForDetail.gender === 'male' ? '남성' : '여성'})
                 </h3>
                 <p className="text-xs text-purple-200 mt-0.5">
                   접수번호: {selectedAppForDetail.receiptNumber} | 접수일시: {selectedAppForDetail.appliedAt}
@@ -695,27 +824,29 @@ export default function AdminPage() {
                     src={selectedAppForDetail.profileImage}
                     alt={selectedAppForDetail.name}
                     onClick={() => setSelectedPhotoForZoom(selectedAppForDetail.profileImage || null)}
-                    className="w-28 h-28 sm:w-32 sm:h-32 rounded-2xl object-cover border border-purple-200 shadow-md cursor-pointer shrink-0"
+                    className="w-28 h-36 rounded-2xl object-cover border border-purple-200 shadow-md cursor-pointer shrink-0"
                     title="클릭하여 확대"
                   />
                 )}
                 <div className="flex-1 grid grid-cols-2 gap-3 bg-neutral-50 p-4 rounded-2xl border border-neutral-200/80">
                   <div>
-                    <span className="text-neutral-400 text-xs block">생년월일</span>
-                    <strong className="text-neutral-800">{selectedAppForDetail.birthDate}</strong>
-                  </div>
-                  <div>
-                    <span className="text-neutral-400 text-xs block">신장 / 체형</span>
-                    <strong className="text-neutral-800">{selectedAppForDetail.height || '미입력'}</strong>
+                    <span className="text-neutral-400 text-xs block">카카오톡 ID</span>
+                    <strong className="text-neutral-900 font-extrabold text-sm text-[#623898]">
+                      {selectedAppForDetail.kakaoId}
+                    </strong>
                   </div>
                   <div>
                     <span className="text-neutral-400 text-xs block">연락처</span>
                     <strong className="text-neutral-800">{selectedAppForDetail.phone}</strong>
                   </div>
                   <div>
-                    <span className="text-neutral-400 text-xs block">음주/흡연</span>
+                    <span className="text-neutral-400 text-xs block">생년월일</span>
+                    <strong className="text-neutral-800">{selectedAppForDetail.birthDate}</strong>
+                  </div>
+                  <div>
+                    <span className="text-neutral-400 text-xs block">신장 / 체형</span>
                     <strong className="text-neutral-800">
-                      {selectedAppForDetail.drinking || '음주정보 없음'} / {selectedAppForDetail.smoking || '비흡연'}
+                      {selectedAppForDetail.height}cm / {selectedAppForDetail.bodyTypeFeature || selectedAppForDetail.bodyType}
                     </strong>
                   </div>
                   <div className="col-span-2">
@@ -723,22 +854,6 @@ export default function AdminPage() {
                     <strong className="text-neutral-800">{selectedAppForDetail.location}</strong>
                   </div>
                 </div>
-              </div>
-
-              {/* Session Information */}
-              <div className="bg-purple-50/60 p-4 rounded-2xl border border-purple-200/80 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-[#623898]">신청 세션 정보</span>
-                  <span className="text-xs font-black px-2.5 py-0.5 rounded-full bg-purple-200 text-[#623898]">
-                    📍 {selectedAppForDetail.region}
-                  </span>
-                </div>
-                <h4 className="font-extrabold text-neutral-900 text-sm">
-                  {selectedAppForDetail.sessionTitle}
-                </h4>
-                <p className="text-xs text-neutral-600">
-                  일시: {selectedAppForDetail.sessionDate} {selectedAppForDetail.sessionTime}
-                </p>
               </div>
 
               {/* Occupation */}
@@ -755,7 +870,7 @@ export default function AdminPage() {
                   </div>
                   <div>
                     <span className="text-neutral-400 text-xs block">직장명</span>
-                    <strong className="text-neutral-800">{selectedAppForDetail.companyName || '(비공개 희망)'}</strong>
+                    <strong className="text-neutral-800">{selectedAppForDetail.companyName || '(비공개)'}</strong>
                   </div>
                 </div>
               </div>
@@ -764,26 +879,45 @@ export default function AdminPage() {
               <div className="space-y-3">
                 <h5 className="font-bold text-neutral-700">취향 및 이상형</h5>
                 <div className="bg-neutral-50 p-4 rounded-2xl border border-neutral-200/80 space-y-3">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-neutral-500">MBTI:</span>
-                    <span className="text-xs font-black text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded-md">
-                      {selectedAppForDetail.mbti}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-xs font-bold text-neutral-500 block mb-1.5">관심사 키워드:</span>
-                    <div className="flex flex-wrap gap-1.5">
-                      {selectedAppForDetail.interests.map((t, idx) => (
-                        <span key={idx} className="text-xs bg-white border border-neutral-200 px-2.5 py-1 rounded-full text-neutral-700">
-                          #{t}
-                        </span>
-                      ))}
+                  <div className="flex items-center gap-4">
+                    <div>
+                      <span className="text-neutral-400 text-xs block">MBTI</span>
+                      <strong className="text-indigo-700 font-black">{selectedAppForDetail.mbti}</strong>
+                    </div>
+                    <div>
+                      <span className="text-neutral-400 text-xs block">쌍커풀</span>
+                      <strong className="text-neutral-800 font-bold">{selectedAppForDetail.eyelid || '무쌍'}</strong>
+                    </div>
+                    <div>
+                      <span className="text-neutral-400 text-xs block">주량 / 흡연</span>
+                      <strong className="text-neutral-800 font-bold">
+                        {selectedAppForDetail.drinkingCapacity || selectedAppForDetail.drinking} / {selectedAppForDetail.smoking}
+                      </strong>
+                    </div>
+                    <div>
+                      <span className="text-neutral-400 text-xs block">종교</span>
+                      <strong className="text-neutral-800 font-bold">{selectedAppForDetail.religion || '무교'}</strong>
                     </div>
                   </div>
+
                   <div>
-                    <span className="text-xs font-bold text-neutral-500 block mb-1">작성한 이상형:</span>
-                    <p className="p-3 bg-white border border-neutral-200 rounded-xl text-neutral-800 leading-relaxed text-xs">
+                    <span className="text-neutral-400 text-xs block mb-1">나의 성격:</span>
+                    <p className="p-3 bg-white border border-neutral-200 rounded-xl text-neutral-800 text-xs">
+                      {selectedAppForDetail.personality || '성격 정보 없음'}
+                    </p>
+                  </div>
+
+                  <div>
+                    <span className="text-neutral-400 text-xs block mb-1">작성한 이상형:</span>
+                    <p className="p-3 bg-white border border-neutral-200 rounded-xl text-neutral-800 text-xs">
                       {selectedAppForDetail.idealType || '작성된 내용이 없습니다.'}
+                    </p>
+                  </div>
+
+                  <div>
+                    <span className="text-neutral-400 text-xs block mb-1">상세 자기소개:</span>
+                    <p className="p-3 bg-white border border-neutral-200 rounded-xl text-neutral-800 text-xs">
+                      {selectedAppForDetail.selfIntro || selectedAppForDetail.intro || '작성된 내용이 없습니다.'}
                     </p>
                   </div>
                 </div>
@@ -796,64 +930,22 @@ export default function AdminPage() {
                   <div className="flex items-center justify-between">
                     <span className="text-neutral-600">직장 인증 방식</span>
                     <span className="font-bold text-purple-800">
-                      {selectedAppForDetail.verificationType === 'business_card' ? '명함 / 사원증 사진 업로드' : '회사 이메일 인증'}
+                      {selectedAppForDetail.verificationType === 'business_card' ? '명함 / 사원증 사진' : '회사 이메일 인증'}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-neutral-600">법적 미혼(싱글) 서약</span>
+                    <span className="text-neutral-600">법적 미혼(싱글) 보증 서약</span>
                     <span className="font-bold text-emerald-700 flex items-center gap-1">
                       <CheckCircle2 className="w-3.5 h-3.5" /> 동의 완료
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-neutral-600">비매너 행위 금지 및 규정 준수 서약</span>
+                    <span className="text-neutral-600">비매너 잠수 금지 서약</span>
                     <span className="font-bold text-emerald-700 flex items-center gap-1">
                       <CheckCircle2 className="w-3.5 h-3.5" /> 동의 완료
                     </span>
                   </div>
                 </div>
-              </div>
-            </div>
-
-            {/* Modal Footer (Status Toggle Actions) */}
-            <div className="p-4 bg-neutral-50 border-t border-neutral-200 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-neutral-500">현재 심사 상태:</span>
-                <span
-                  className={`text-xs font-black px-2.5 py-1 rounded-full ${
-                    selectedAppForDetail.status === '승인완료'
-                      ? 'bg-emerald-100 text-emerald-800'
-                      : selectedAppForDetail.status === '심사대기'
-                      ? 'bg-amber-100 text-amber-800'
-                      : 'bg-rose-100 text-rose-800'
-                  }`}
-                >
-                  {selectedAppForDetail.status}
-                </span>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => handleStatusChange(selectedAppForDetail.id, '심사대기')}
-                  className="px-3 py-1.5 rounded-xl text-xs font-bold bg-white border border-neutral-300 text-neutral-700 hover:bg-neutral-100 transition-colors"
-                >
-                  대기 전환
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleStatusChange(selectedAppForDetail.id, '반려')}
-                  className="px-3 py-1.5 rounded-xl text-xs font-bold bg-rose-100 text-rose-700 hover:bg-rose-200 transition-colors"
-                >
-                  반려하기
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleStatusChange(selectedAppForDetail.id, '승인완료')}
-                  className="px-4 py-1.5 rounded-xl text-xs font-black bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm transition-colors"
-                >
-                  참가 승인
-                </button>
               </div>
             </div>
           </div>
