@@ -2,10 +2,8 @@ import { Session, Review, FAQItem } from '@/types';
 
 export const SESSIONS_DATA: Session[] = [
   {
-    id: 'session-gangnam-1',
-    region: '강남/역삼',
-    locationName: '역삼 프라이빗 라운지 아트리움',
-    locationAddress: '서울 강남구 테헤란로 142 (역삼역 3번 출구 도보 2분)',
+    id: 'session-sat-1',
+    title: '토요일 1차 세션 (20대 중후반)',
     date: '2026.09.20 (토)',
     time: '14:30 ~ 17:00',
     ageGroup: '20대 중후반 (남 27~32세 / 여 24~30세)',
@@ -16,10 +14,8 @@ export const SESSIONS_DATA: Session[] = [
     originalPrice: 60000,
   },
   {
-    id: 'session-gangnam-2',
-    region: '강남/역삼',
-    locationName: '역삼 프라이빗 라운지 아트리움',
-    locationAddress: '서울 강남구 테헤란로 142 (역삼역 3번 출구 도보 2분)',
+    id: 'session-sat-2',
+    title: '토요일 2차 세션 (30대 초중반)',
     date: '2026.09.20 (토)',
     time: '18:00 ~ 20:30',
     ageGroup: '30대 초중반 (남 30~36세 / 여 28~34세)',
@@ -30,10 +26,8 @@ export const SESSIONS_DATA: Session[] = [
     originalPrice: 60000,
   },
   {
-    id: 'session-hongdae-1',
-    region: '홍대/합정',
-    locationName: '합정 테라스 감성 라운지 루프',
-    locationAddress: '서울 마포구 독막로 31 (합정역 6번 출구 도보 3분)',
+    id: 'session-sun-1',
+    title: '일요일 1차 세션 (20대 중후반)',
     date: '2026.09.21 (일)',
     time: '15:00 ~ 17:30',
     ageGroup: '20대 중후반 (남 26~31세 / 여 24~29세)',
@@ -44,10 +38,8 @@ export const SESSIONS_DATA: Session[] = [
     originalPrice: 60000,
   },
   {
-    id: 'session-hongdae-2',
-    region: '홍대/합정',
-    locationName: '합정 테라스 감성 라운지 루프',
-    locationAddress: '서울 마포구 독막로 31 (합정역 6번 출구 도보 3분)',
+    id: 'session-sun-2',
+    title: '일요일 2차 세션 (30대 초중반)',
     date: '2026.09.21 (일)',
     time: '18:30 ~ 21:00',
     ageGroup: '30대 초중반 (남 31~37세 / 여 28~35세)',
@@ -58,10 +50,8 @@ export const SESSIONS_DATA: Session[] = [
     originalPrice: 60000,
   },
   {
-    id: 'session-jamsil-1',
-    region: '잠실/올림픽공원',
-    locationName: '잠실 시그니처 갤러리 카페',
-    locationAddress: '서울 송파구 백제고분로 41길 (석촌호수 도보 4분)',
+    id: 'session-next-sat',
+    title: '다음 주 토요일 세션 (30대 직장인)',
     date: '2026.09.27 (토)',
     time: '15:00 ~ 17:30',
     ageGroup: '30대 초중반 (남 30~36세 / 여 28~34세)',
@@ -72,10 +62,8 @@ export const SESSIONS_DATA: Session[] = [
     originalPrice: 60000,
   },
   {
-    id: 'session-euljiro-1',
-    region: '을지로',
-    locationName: '을지로 헤리티지 와인 라운지',
-    locationAddress: '서울 중구 을지로 100 (을지로입구역 1분)',
+    id: 'session-next-sun',
+    title: '다음 주 일요일 세션 (2030 통합)',
     date: '2026.09.28 (일)',
     time: '16:00 ~ 18:30',
     ageGroup: '20대 후반~30대 초반 (남 28~35세 / 여 26~33세)',
@@ -193,8 +181,8 @@ export const TRUST_STATS = [
 export const HOW_IT_WORKS_STEPS = [
   {
     step: '01',
-    title: '프라이빗 라운지 입장',
-    desc: '예약된 프라이빗 라운지에 도착하여 웰컴 드링크와 명찰, 대화카드를 수령합니다.',
+    title: '프라이빗 모임 공간 도착',
+    desc: '약속된 프라이빗 모임 장소에 도착하여 웰컴 드링크와 명찰, 대화카드를 수령합니다.',
     badge: '웰컴 드링크 제공',
   },
   {

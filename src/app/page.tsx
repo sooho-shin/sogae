@@ -32,14 +32,7 @@ import {
 } from '@/data/mockData';
 
 export default function HomePage() {
-  const [selectedRegion, setSelectedRegion] = useState<string>('전체');
   const [openFaqId, setOpenFaqId] = useState<string | null>('faq-1');
-
-  // Filter sessions based on region
-  const filteredSessions =
-    selectedRegion === '전체'
-      ? SESSIONS_DATA
-      : SESSIONS_DATA.filter((s) => s.region === selectedRegion);
 
   const toggleFaq = (id: string) => {
     setOpenFaqId(openFaqId === id ? null : id);
@@ -322,41 +315,27 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 5. SESSION SCHEDULE & LOCATIONS */}
+      {/* 5. SESSION SCHEDULE */}
       <section id="schedule" className="py-16 md:py-24 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center max-w-2xl mx-auto mb-10 space-y-3">
+        <div className="text-center max-w-2xl mx-auto mb-12 space-y-3">
           <span className="text-xs font-extrabold text-[#623898] uppercase tracking-wider bg-purple-100 px-3 py-1 rounded-full">
-            SCHEDULE & VENUE
+            SESSION SCHEDULE
           </span>
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-neutral-900">
-            이번 주 소개팅 일정 & 장소
+            이번 주 소개팅 세션 일정
           </h2>
           <p className="text-neutral-600 text-sm sm:text-base">
-            접근성이 뛰어난 서울 주요 역세권의 프라이빗 고급 라운지에서 진행됩니다
+            원하시는 일정과 연령대 세션을 선택하여 참가하실 수 있습니다
+            <br className="hidden sm:inline" />
+            <span className="text-xs text-neutral-500 font-medium">
+              (상세 모임 장소는 100% 안전을 위해 참가 확정자 대상 개별 비밀 안내됩니다)
+            </span>
           </p>
-        </div>
-
-        {/* Region Filter Buttons */}
-        <div className="flex flex-wrap items-center justify-center gap-2 mb-8">
-          {['전체', '강남/역삼', '홍대/합정', '잠실/올림픽공원', '을지로'].map((region) => (
-            <button
-              key={region}
-              type="button"
-              onClick={() => setSelectedRegion(region)}
-              className={`px-4 py-2 rounded-full text-xs sm:text-sm font-bold transition-all ${
-                selectedRegion === region
-                  ? 'bg-[#623898] text-white shadow-md shadow-purple-900/20'
-                  : 'bg-white text-neutral-600 border border-neutral-200 hover:border-purple-300'
-              }`}
-            >
-              {region}
-            </button>
-          ))}
         </div>
 
         {/* Sessions Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredSessions.map((session) => (
+          {SESSIONS_DATA.map((session) => (
             <div
               key={session.id}
               className="bg-white rounded-2xl border border-purple-100/80 shadow-md shadow-neutral-900/5 hover:shadow-xl hover:border-purple-300 transition-all p-6 flex flex-col justify-between group"
@@ -364,9 +343,9 @@ export default function HomePage() {
               <div>
                 {/* Header Info */}
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs font-extrabold px-2.5 py-1 rounded-md bg-purple-100 text-[#623898]">
-                    {session.region}
-                  </span>
+                  <h3 className="text-base font-extrabold text-neutral-900 group-hover:text-[#623898] transition-colors">
+                    {session.title}
+                  </h3>
                   <span
                     className={`text-xs font-bold px-2.5 py-1 rounded-full ${
                       session.status === '마감임박'
@@ -378,15 +357,11 @@ export default function HomePage() {
                   </span>
                 </div>
 
-                <h3 className="text-lg font-extrabold text-neutral-900 group-hover:text-[#623898] transition-colors mb-3">
-                  {session.locationName}
-                </h3>
-
                 {/* Session Details */}
-                <div className="space-y-2 text-xs sm:text-sm text-neutral-600 mb-6 bg-neutral-50 p-3.5 rounded-xl">
+                <div className="space-y-2.5 text-xs sm:text-sm text-neutral-600 mb-6 bg-neutral-50 p-4 rounded-xl">
                   <div className="flex items-center gap-2">
                     <Calendar className="w-4 h-4 text-purple-600 shrink-0" />
-                    <span className="font-semibold text-neutral-800">{session.date}</span>
+                    <span className="font-bold text-neutral-900">{session.date}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Clock className="w-4 h-4 text-purple-600 shrink-0" />
@@ -394,19 +369,13 @@ export default function HomePage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <Users className="w-4 h-4 text-purple-600 shrink-0" />
-                    <span className="text-[#623898] font-bold">{session.ageGroup}</span>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <MapPin className="w-4 h-4 text-purple-600 shrink-0 mt-0.5" />
-                    <span className="text-[11px] text-neutral-500 leading-tight">
-                      {session.locationAddress}
-                    </span>
+                    <span className="text-[#623898] font-bold">대상: {session.ageGroup}</span>
                   </div>
                 </div>
 
                 {/* Slots Left Indicator */}
                 <div className="grid grid-cols-2 gap-2 mb-4 text-center">
-                  <div className="bg-purple-50/60 border border-purple-100 py-1.5 rounded-lg">
+                  <div className="bg-purple-50/60 border border-purple-100 py-2 rounded-lg">
                     <span className="text-[11px] text-neutral-500 block">남성 잔여</span>
                     <span className="text-xs font-black text-purple-800">
                       {session.maleSlotsLeft === 0 ? (
@@ -416,7 +385,7 @@ export default function HomePage() {
                       )}
                     </span>
                   </div>
-                  <div className="bg-pink-50/60 border border-pink-100 py-1.5 rounded-lg">
+                  <div className="bg-pink-50/60 border border-pink-100 py-2 rounded-lg">
                     <span className="text-[11px] text-neutral-500 block">여성 잔여</span>
                     <span className="text-xs font-black text-pink-800">
                       {session.femaleSlotsLeft === 0 ? (

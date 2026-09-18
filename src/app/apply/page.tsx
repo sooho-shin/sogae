@@ -1,20 +1,16 @@
 'use client';
 
 import React, { useState, useEffect, Suspense } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import confetti from 'canvas-confetti';
 import {
-  Heart,
   Calendar,
   Clock,
-  MapPin,
   Users,
-  ShieldCheck,
   CheckCircle2,
   ArrowRight,
   ArrowLeft,
-  Upload,
   Sparkles,
   Info,
   Check,
@@ -31,7 +27,6 @@ import { ApplicationFormData, Session } from '@/types';
 
 function ApplyFormContent() {
   const searchParams = useSearchParams();
-  const router = useRouter();
 
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
@@ -41,7 +36,7 @@ function ApplyFormContent() {
   // Form State
   const [formData, setFormData] = useState<ApplicationFormData>({
     sessionId: '',
-    region: '강남/역삼',
+    sessionTitle: '',
     sessionDate: '',
     sessionTime: '',
     ageGroup: '',
@@ -80,19 +75,18 @@ function ApplyFormContent() {
         setFormData((prev) => ({
           ...prev,
           sessionId: found.id,
-          region: found.region,
+          sessionTitle: found.title,
           sessionDate: found.date,
           sessionTime: found.time,
           ageGroup: found.ageGroup,
         }));
       }
     } else if (SESSIONS_DATA.length > 0 && !formData.sessionId) {
-      // Default to first session
       const first = SESSIONS_DATA[0];
       setFormData((prev) => ({
         ...prev,
         sessionId: first.id,
-        region: first.region,
+        sessionTitle: first.title,
         sessionDate: first.date,
         sessionTime: first.time,
         ageGroup: first.ageGroup,
@@ -105,7 +99,7 @@ function ApplyFormContent() {
     setFormData((prev) => ({
       ...prev,
       sessionId: session.id,
-      region: session.region,
+      sessionTitle: session.title,
       sessionDate: session.date,
       sessionTime: session.time,
       ageGroup: session.ageGroup,
@@ -144,7 +138,7 @@ function ApplyFormContent() {
 
     if (step === 1) {
       if (!formData.sessionId) {
-        errs.session = '참가하실 소개팅 세션을 선택해주세요.';
+        errs.session = '참가하실 소개팅 일정을 선택해주세요.';
       }
     } else if (step === 2) {
       if (!formData.name.trim()) errs.name = '이름을 입력해주세요.';
@@ -199,13 +193,11 @@ function ApplyFormContent() {
     e.preventDefault();
     if (!validateStep(4)) return;
 
-    // Generate receipt number
     const randomNum = Math.floor(1000 + Math.random() * 9000);
-    const receipt = `LM-${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, '0')}${String(new Date().getDate()).padStart(2, '0')}-${randomNum}`;
+    const receipt = `SG-${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, '0')}${String(new Date().getDate()).padStart(2, '0')}-${randomNum}`;
     setReceiptNumber(receipt);
     setIsSubmitted(true);
 
-    // Trigger celebration confetti
     try {
       confetti({
         particleCount: 100,
@@ -286,7 +278,7 @@ function ApplyFormContent() {
             <div className="flex justify-between">
               <span className="text-neutral-500 font-medium">선택 세션</span>
               <span className="font-bold text-neutral-800 text-right">
-                {selectedSessionObj?.locationName}
+                {selectedSessionObj?.title}
                 <br />
                 <span className="text-xs text-[#623898]">
                   {selectedSessionObj?.date} {selectedSessionObj?.time}
@@ -308,7 +300,7 @@ function ApplyFormContent() {
             <div className="text-xs text-purple-900 space-y-1">
               <p className="font-bold">입금 및 최종 확정 안내</p>
               <p className="text-purple-800/80 leading-relaxed">
-                신청서 검토 후 입력하신 휴대폰 번호로 카카오톡 알림톡(입금 계좌 및 상세 위치 안내)이 발송됩니다.
+                신청서 검토 후 입력하신 휴대폰 번호로 카카오톡 알림톡(입금 계좌 및 상세 모임 장소 안내)이 발송됩니다.
                 안내된 시각까지 입금이 완료되면 최종 참가가 확정됩니다.
               </p>
             </div>
@@ -353,7 +345,7 @@ function ApplyFormContent() {
           />
 
           {[
-            { num: 1, label: '일정/지역' },
+            { num: 1, label: '일정 선택' },
             { num: 2, label: '기본 프로필' },
             { num: 3, label: '직장/취향' },
             { num: 4, label: '인증/서약' },
@@ -387,10 +379,10 @@ function ApplyFormContent() {
           <div className="space-y-6">
             <div>
               <h2 className="text-lg font-black text-neutral-900 mb-1">
-                STEP 1. 참가 일정 및 라운지 선택
+                STEP 1. 참가 희망 일정 선택
               </h2>
               <p className="text-xs text-neutral-500">
-                원하시는 지역과 연령대 세션을 선택해 주세요.
+                원하시는 요일과 시간대, 연령대 세션을 선택해 주세요.
               </p>
             </div>
 
@@ -416,11 +408,8 @@ function ApplyFormContent() {
                   >
                     <div className="space-y-1.5">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-extrabold px-2 py-0.5 rounded bg-purple-100 text-[#623898]">
-                          {session.region}
-                        </span>
-                        <span className="text-xs font-bold text-neutral-800">
-                          {session.locationName}
+                        <span className="text-sm font-extrabold text-neutral-900">
+                          {session.title}
                         </span>
                         <span
                           className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${

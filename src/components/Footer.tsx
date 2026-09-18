@@ -47,7 +47,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link href="/#schedule" className="hover:text-white transition-colors">
-                  이번 주 세션 일정 및 장소
+                  이번 주 소개팅 일정
                 </Link>
               </li>
               <li>
@@ -88,7 +88,7 @@ export default function Footer() {
               <div className="flex items-start gap-2">
                 <MapPin className="w-4 h-4 text-purple-400 shrink-0 mt-0.5" />
                 <span className="text-neutral-400">
-                  본사: 서울특별시 서초구 강남대로 (라운지: 강남·홍대·잠실·을지로)
+                  본사: 서울특별시 서초구 강남대로
                 </span>
               </div>
             </div>

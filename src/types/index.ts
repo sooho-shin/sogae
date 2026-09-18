@@ -1,10 +1,8 @@
 export interface Session {
   id: string;
-  region: '강남/역삼' | '홍대/합정' | '잠실/올림픽공원' | '을지로';
-  locationName: string;
-  locationAddress: string;
+  title: string; // e.g. "토요일 오후 세션", "일요일 저녁 세션"
   date: string; // e.g. "2026.09.20 (토)"
-  time: string; // e.g. "15:00 ~ 17:30"
+  time: string; // e.g. "14:30 ~ 17:00"
   ageGroup: string; // e.g. "20대 중후반 (남 27-32 / 여 24-30)"
   maleSlotsLeft: number;
   femaleSlotsLeft: number;
@@ -35,9 +33,9 @@ export interface FAQItem {
 }
 
 export interface ApplicationFormData {
-  // Step 1: Session
+  // Step 1: Session (일정 및 연령대)
   sessionId: string;
-  region: string;
+  sessionTitle: string;
   sessionDate: string;
   sessionTime: string;
   ageGroup: string;
