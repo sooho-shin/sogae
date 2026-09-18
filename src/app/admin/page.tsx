@@ -86,16 +86,27 @@ export default function AdminPage() {
   };
 
   // Login handler
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoginError('');
 
-    if (usernameInput === 'sooho' && passwordInput === 'tjdrbs') {
-      sessionStorage.setItem('sogaenamnyeo_admin_auth', 'true');
-      setIsAuthenticated(true);
-      fetchApplications();
-    } else {
-      setLoginError('아이디 또는 비밀번호가 올바르지 않습니다.');
+    try {
+      const res = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: usernameInput, password: passwordInput }),
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        sessionStorage.setItem('sogaenamnyeo_admin_auth', 'true');
+        setIsAuthenticated(true);
+        fetchApplications();
+      } else {
+        setLoginError(data.message || '아이디 또는 비밀번호가 올바르지 않습니다.');
+      }
+    } catch (err) {
+      setLoginError('로그인 처리 중 네트워크 오류가 발생했습니다.');
     }
   };
 
