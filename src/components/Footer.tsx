@@ -105,7 +105,13 @@ export default function Footer() {
               통신판매업신고: 제2022-서울서초-0192호 | 개인정보보호책임자: 소개남녀 운영팀
             </p>
           </div>
-          <p>© 2022-2026 소개남녀 (Sogaenamnyeo). All rights reserved.</p>
+          <div className="flex items-center gap-3">
+            <p>© 2022-2026 소개남녀 (Sogaenamnyeo). All rights reserved.</p>
+            <span className="text-neutral-700">|</span>
+            <Link href="/admin" className="text-neutral-500 hover:text-neutral-300 transition-colors">
+              관리자 모드
+            </Link>
+          </div>
         </div>
       </div>
     </footer>

@@ -240,7 +240,7 @@ function ApplyFormContent() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateStep(4)) return;
 
@@ -248,6 +248,27 @@ function ApplyFormContent() {
     const receipt = `SG-${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, '0')}${String(new Date().getDate()).padStart(2, '0')}-${randomNum}`;
     setReceiptNumber(receipt);
     setIsSubmitted(true);
+
+    // Send data to admin API
+    try {
+      const now = new Date();
+      const formattedDate = `${now.getFullYear()}.${String(now.getMonth() + 1).padStart(2, '0')}.${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+      
+      await fetch('/api/applications', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...formData,
+          receiptNumber: receipt,
+          appliedAt: formattedDate,
+          sessionTitle: selectedSessionObj?.title || '소개남녀 로테이션 세션',
+          sessionDate: selectedSessionObj?.date || '',
+          sessionTime: selectedSessionObj?.time || '',
+        }),
+      });
+    } catch (err) {
+      console.error('Failed to submit application to API:', err);
+    }
 
     try {
       confetti({
