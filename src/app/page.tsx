@@ -23,8 +23,9 @@ import {
   FAQ_DATA,
   TRUST_STATS,
   SETTING_REGIONS,
+  SAMPLE_MALE_CARD,
+  SAMPLE_FEMALE_CARD,
 } from '@/data/mockData';
-import { INITIAL_APPLICATIONS } from '@/data/initialApplications';
 
 export default function HomePage() {
   const [activeCardGender, setActiveCardGender] = useState<'male' | 'female'>('male');
@@ -32,8 +33,8 @@ export default function HomePage() {
   const [openFaqId, setOpenFaqId] = useState<string | null>('faq-1');
 
   // Sample male and female profile card data
-  const maleSample = INITIAL_APPLICATIONS.find((a) => a.gender === 'male') || INITIAL_APPLICATIONS[0];
-  const femaleSample = INITIAL_APPLICATIONS.find((a) => a.gender === 'female') || INITIAL_APPLICATIONS[1];
+  const maleSample = SAMPLE_MALE_CARD;
+  const femaleSample = SAMPLE_FEMALE_CARD;
 
   const toggleFaq = (id: string) => {
     setOpenFaqId(openFaqId === id ? null : id);

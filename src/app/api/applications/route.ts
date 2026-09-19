@@ -68,17 +68,21 @@ export async function GET() {
       const { data, error } = await supabase
         .from('applications')
         .select('*')
+        .neq('status', '삭제됨')
         .order('created_at', { ascending: false });
 
-      if (!error && data && data.length > 0) {
+      if (error) {
+        console.error('Supabase fetch applications error:', error);
+      } else if (data) {
         return NextResponse.json({ success: true, data: data.map(mapRowToApp) });
       }
     }
 
     // 2. Fallback to in-memory store
-    const list = globalThis.__APPLICATIONS_STORE__ || [];
+    const list = (globalThis.__APPLICATIONS_STORE__ || []).filter((a) => a.status !== ('삭제됨' as ApplicationStatus));
     return NextResponse.json({ success: true, data: list });
   } catch (error) {
+    console.error('GET /api/applications exception:', error);
     return NextResponse.json({ success: false, error: 'Failed to fetch applications' }, { status: 500 });
   }
 }
@@ -138,8 +142,15 @@ export async function POST(request: Request) {
         .select()
         .single();
 
-      if (!error && data) {
-        return NextResponse.json({ success: true, data: mapRowToApp(data) });
+      if (error) {
+        console.error('Supabase insert application error:', error);
+      } else if (data) {
+        const savedApp = mapRowToApp(data);
+        if (!globalThis.__APPLICATIONS_STORE__) {
+          globalThis.__APPLICATIONS_STORE__ = [];
+        }
+        globalThis.__APPLICATIONS_STORE__.unshift(savedApp);
+        return NextResponse.json({ success: true, data: savedApp });
       }
     }
 
@@ -151,6 +162,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true, data: newApp });
   } catch (error) {
+    console.error('POST /api/applications exception:', error);
     return NextResponse.json({ success: false, error: 'Failed to create application' }, { status: 500 });
   }
 }
@@ -191,5 +203,36 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ success: true, data: globalThis.__APPLICATIONS_STORE__[appIndex] });
   } catch (error) {
     return NextResponse.json({ success: false, error: 'Failed to update status' }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+    if (!id) {
+      return NextResponse.json({ success: false, error: 'id is required' }, { status: 400 });
+    }
+
+    // 1. If Supabase is configured, soft-delete in PostgreSQL DB
+    if (isSupabaseConfigured() && supabase) {
+      const { error } = await supabase
+        .from('applications')
+        .update({ status: '삭제됨' })
+        .eq('id', id);
+
+      if (error) {
+        console.error('Supabase soft-delete error:', error);
+      }
+    }
+
+    // 2. Fallback to in-memory store
+    if (globalThis.__APPLICATIONS_STORE__) {
+      globalThis.__APPLICATIONS_STORE__ = globalThis.__APPLICATIONS_STORE__.filter((a) => a.id !== id);
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    return NextResponse.json({ success: false, error: 'Failed to delete application' }, { status: 500 });
   }
 }

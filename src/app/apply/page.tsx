@@ -93,20 +93,65 @@ function ApplyFormContent() {
     }
   }, [searchParams]);
 
+  const [isCompressing, setIsCompressing] = useState<boolean>(false);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [submitError, setSubmitError] = useState<string>('');
+
+  // HTML5 Canvas 기반 고효율 이미지 리사이징 & 압축 (원본 10MB -> 약 100~150KB)
+  const compressImage = (file: File, maxWidth = 800, quality = 0.82): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let { width, height } = img;
+
+          if (width > maxWidth) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            resolve(event.target?.result as string);
+            return;
+          }
+
+          ctx.drawImage(img, 0, 0, width, height);
+          const compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
+          resolve(compressedDataUrl);
+        };
+        img.onerror = (err) => reject(err);
+        img.src = event.target?.result as string;
+      };
+      reader.onerror = (err) => reject(err);
+      reader.readAsDataURL(file);
+    });
+  };
+
   // Image Upload Handler
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 10 * 1024 * 1024) {
-        setErrors((prev) => ({ ...prev, profileImage: '사진 용량은 10MB 이하만 가능합니다.' }));
+      if (file.size > 25 * 1024 * 1024) {
+        setErrors((prev) => ({ ...prev, profileImage: '사진 용량은 25MB 이하만 가능합니다.' }));
         return;
       }
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData((prev) => ({ ...prev, profileImage: reader.result as string }));
+      setIsCompressing(true);
+      try {
+        const compressedBase64 = await compressImage(file, 800, 0.82);
+        setFormData((prev) => ({ ...prev, profileImage: compressedBase64 }));
         setErrors((prev) => ({ ...prev, profileImage: '' }));
-      };
-      reader.readAsDataURL(file);
+      } catch (err) {
+        console.error('Image compression error:', err);
+        setErrors((prev) => ({ ...prev, profileImage: '사진 압축 처리 중 오류가 발생했습니다.' }));
+      } finally {
+        setIsCompressing(false);
+      }
     }
   };
 
@@ -205,18 +250,19 @@ function ApplyFormContent() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateStep(4)) return;
+    if (isSubmitting) return;
+
+    setIsSubmitting(true);
+    setSubmitError('');
 
     const randomNum = Math.floor(1000 + Math.random() * 9000);
     const receipt = `SG-1ON1-${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, '0')}${String(new Date().getDate()).padStart(2, '0')}-${randomNum}`;
-    setReceiptNumber(receipt);
-    setIsSubmitted(true);
 
-    // Send data to API
     try {
       const now = new Date();
       const formattedDate = `${now.getFullYear()}.${String(now.getMonth() + 1).padStart(2, '0')}.${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
-      await fetch('/api/applications', {
+      const res = await fetch('/api/applications', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -224,25 +270,38 @@ function ApplyFormContent() {
           receiptNumber: receipt,
           appliedAt: formattedDate,
           sessionTitle: `${formData.region} 1:1 맞춤 매칭`,
-          status: '프로필승인',
+          status: '심사대기',
         }),
       });
-    } catch (err) {
+
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || '지원서 등록에 실패했습니다.');
+      }
+
+      setReceiptNumber(receipt);
+      setIsSubmitted(true);
+
+      try {
+        confetti({
+          particleCount: 120,
+          spread: 80,
+          origin: { y: 0.5 },
+          colors: ['#623898', '#E12B70', '#FFC837', '#8C52FF'],
+        });
+      } catch {
+        // safe fallback
+      }
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (err: any) {
       console.error('Failed to submit application to API:', err);
+      const msg = err?.message || '지원서 등록 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.';
+      setSubmitError(msg);
+      alert(msg);
+    } finally {
+      setIsSubmitting(false);
     }
-
-    try {
-      confetti({
-        particleCount: 120,
-        spread: 80,
-        origin: { y: 0.5 },
-        colors: ['#623898', '#E12B70', '#FFC837', '#8C52FF'],
-      });
-    } catch {
-      // safe fallback
-    }
-
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const copyReceipt = () => {
@@ -450,7 +509,12 @@ function ApplyFormContent() {
                 </span>
               </label>
 
-              {formData.profileImage ? (
+              {isCompressing ? (
+                <div className="border-2 border-dashed border-purple-300 rounded-2xl p-8 flex flex-col items-center justify-center gap-3 bg-purple-50/50 text-center">
+                  <div className="w-8 h-8 border-3 border-[#623898] border-t-transparent rounded-full animate-spin" />
+                  <span className="text-xs font-bold text-[#623898]">사진 고효율 최적화 및 압축 중...</span>
+                </div>
+              ) : formData.profileImage ? (
                 <div className="flex items-center gap-4 pt-2">
                   <div className="relative w-28 h-36 rounded-xl overflow-hidden border-2 border-[#623898] shadow-md shrink-0">
                     <img
@@ -469,10 +533,10 @@ function ApplyFormContent() {
                   </div>
                   <div className="space-y-1.5 text-xs">
                     <p className="font-extrabold text-emerald-700 flex items-center gap-1">
-                      <Check className="w-4 h-4" /> 얼굴 사진이 정상 등록되었습니다.
+                      <Check className="w-4 h-4" /> 얼굴 사진이 최적화되어 등록되었습니다.
                     </p>
                     <p className="text-neutral-500 text-[11px]">
-                      이 사진이 1:1 프로필 카드 좌측 상단에 반영됩니다.
+                      이 사진이 1:1 프로필 카드 좌측 상단에 선명하게 반영됩니다.
                     </p>
                     <label className="inline-block px-3 py-1.5 bg-white border border-neutral-300 rounded-lg font-bold text-neutral-700 hover:bg-neutral-50 cursor-pointer text-xs">
                       다른 사진으로 변경
@@ -493,7 +557,7 @@ function ApplyFormContent() {
                       여기를 클릭하여 본인 사진 업로드
                     </span>
                     <p className="text-[11px] text-neutral-400 mt-0.5">
-                      JPG, PNG 파일 지원 (최대 10MB)
+                      JPG, PNG, HEIC 등 사진 지원 (자동 최적화)
                     </p>
                   </div>
                   <input
@@ -988,10 +1052,20 @@ function ApplyFormContent() {
             <button
               type="button"
               onClick={handleSubmit}
-              className="inline-flex items-center gap-2 px-8 py-3 rounded-xl text-xs sm:text-sm font-black text-white bg-gradient-to-r from-[#E12B70] to-[#8C52FF] hover:opacity-95 shadow-lg shadow-pink-900/20 active:scale-95 transition-all"
+              disabled={isSubmitting || isCompressing}
+              className="inline-flex items-center gap-2 px-8 py-3 rounded-xl text-xs sm:text-sm font-black text-white bg-gradient-to-r from-[#E12B70] to-[#8C52FF] hover:opacity-95 shadow-lg shadow-pink-900/20 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <Sparkles className="w-4 h-4" />
-              <span>1:1 프로필 카드 최종 등록하기</span>
+              {isSubmitting ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <span>1:1 프로필 카드 등록 중...</span>
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-4 h-4" />
+                  <span>1:1 프로필 카드 최종 등록하기</span>
+                </>
+              )}
             </button>
           )}
         </div>

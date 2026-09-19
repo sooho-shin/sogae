@@ -25,6 +25,7 @@ import {
   Copy,
   Send,
   Share2,
+  Trash2,
 } from 'lucide-react';
 import { AdminApplication, ApplicationStatus } from '@/types/admin';
 import ProfileCard from '@/components/ProfileCard';
@@ -140,6 +141,27 @@ export default function AdminPage() {
       }
     } catch (err) {
       console.error('Failed to update status:', err);
+    }
+  };
+
+  // Delete application handler
+  const handleDeleteApplication = async (id: string, name: string) => {
+    if (!window.confirm(`${name}님의 지원서를 정말 삭제하시겠습니까?`)) return;
+    try {
+      const res = await fetch(`/api/applications?id=${id}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (data.success) {
+        setApplications((prev) => prev.filter((app) => app.id !== id));
+        if (selectedAppForCard?.id === id) setSelectedAppForCard(null);
+        if (selectedAppForDetail?.id === id) setSelectedAppForDetail(null);
+      } else {
+        alert('삭제 처리에 실패했습니다.');
+      }
+    } catch (err) {
+      console.error('Failed to delete application:', err);
+      alert('네트워크 오류로 삭제에 실패했습니다.');
     }
   };
 
@@ -487,6 +509,7 @@ export default function AdminPage() {
                     <th className="py-3.5 px-4 text-center">매칭 진행 상태</th>
                     <th className="py-3.5 px-4 text-center">1:1 프로필 카드</th>
                     <th className="py-3.5 px-4 text-center">상세</th>
+                    <th className="py-3.5 px-4 text-center">관리</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-neutral-100">
@@ -629,6 +652,18 @@ export default function AdminPage() {
                           className="px-2.5 py-1 rounded-lg text-xs font-bold text-neutral-600 bg-neutral-100 hover:bg-neutral-200 transition-colors"
                         >
                           상세
+                        </button>
+                      </td>
+
+                      {/* Delete Button */}
+                      <td className="py-3 px-4 text-center">
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteApplication(app.id, app.nickname || app.name)}
+                          className="p-1.5 rounded-lg text-neutral-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                          title="지원서 삭제"
+                        >
+                          <Trash2 className="w-4 h-4" />
                         </button>
                       </td>
                     </tr>
