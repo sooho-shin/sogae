@@ -95,7 +95,7 @@ INSERT INTO public.applications (
   '헬스, 피아노, 클라이밍',
   '여성스럽고 차분하며 자기관리 잘하고, 대화가 편안하면서 서로 배려할 수 있는 사람',
   '꾸준한 자기관리와 안정적인 직업, 탄탄한 생활 기반이 강점입니다. 책임감 있게 관계를 이어가며, 편안한 대화와 배려, 신뢰를 바탕으로 꽤 오래 만나는 연애를 중요하게 생각합니다.',
-  'https://images.unsplash.com/photo-1544168190-79c17527004f?auto=format&fit=crop&w=400&q=80'
+  '/images/sample_male.jpg'
 ), (
   'SG-20260918-002', '2026.09.18 16:15', '매칭제안중', '이지은', '러블리지은', 'jieun_lee97', 'female',
   '1997.08.22', '97', '010-9284-1736', '서울 영등포구 여의도동', '합정동', '합정동 1:1 맞춤 매칭',
@@ -105,5 +105,5 @@ INSERT INTO public.applications (
   '카페 투어, 와인 시음, 전시회 감상',
   '다정하고 자기 일에 열정적인 분, 함께 맛있는 음식과 와인을 곁들여 대화할 수 있는 분',
   '금융권에서 성실히 일하고 있으며 여유로운 주말을 함께 나눌 따뜻한 인연을 찾고 있습니다. 솔직하고 배려 깊은 연애를 지향합니다.',
-  'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=400&q=80'
+  '/images/sample_female.jpg'
 ) ON CONFLICT (receipt_number) DO NOTHING;
