@@ -220,7 +220,7 @@ function ApplyFormContent() {
       if (!formData.selfIntro.trim()) errs.selfIntro = '상대방에게 전달될 자기소개를 정성껏 작성해주세요.';
     } else if (step === 4) {
       if (!formData.agreementSingle) {
-        errs.agreementSingle = '법적 미혼(싱글) 보증 서약에 동의하셔야 지원이 가능합니다.';
+        errs.agreementSingle = '싱글(미혼) 서약에 동의하셔야 신청이 가능합니다.';
       }
       if (!formData.agreementManner) {
         errs.agreementManner = '매너 준수 및 잠수 금지 서약에 동의해 주세요.';
@@ -976,10 +976,10 @@ function ApplyFormContent() {
                 />
                 <div className="text-xs">
                   <span className="font-bold text-neutral-900">
-                    [필수] 법적 미혼(싱글) 보증 서약
+                    [필수] 싱글(미혼) 서약 동의
                   </span>
                   <p className="text-neutral-500 text-[11px] mt-0.5">
-                    현재 법적 미혼 상태이며 사실혼 및 교제 중인 상대가 없음을 서약합니다. 위반 시 모든 법적 책임을 집니다.
+                    현재 법적 미혼 상태이며 사실혼 및 교제 중인 상대가 없음을 확인하고 서약합니다.
                   </p>
                 </div>
               </label>

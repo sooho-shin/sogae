@@ -980,7 +980,7 @@ export default function AdminPage() {
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-neutral-600">법적 미혼(싱글) 보증 서약</span>
+                    <span className="text-neutral-600">싱글(미혼) 서약 동의</span>
                     <span className="font-bold text-emerald-700 flex items-center gap-1">
                       <CheckCircle2 className="w-3.5 h-3.5" /> 동의 완료
                     </span>

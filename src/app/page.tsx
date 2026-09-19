@@ -401,9 +401,9 @@ export default function HomePage() {
               <div className="w-12 h-12 rounded-xl bg-pink-500/20 text-pink-300 flex items-center justify-center font-bold">
                 <Lock className="w-6 h-6" />
               </div>
-              <h3 className="text-lg font-bold text-white">2. 싱글(미혼) 법적 보증 서약</h3>
+              <h3 className="text-lg font-bold text-white">2. 싱글(미혼) 서약 및 확인</h3>
               <p className="text-xs sm:text-sm text-neutral-300 leading-relaxed">
-                기혼자나 교제 중인 분의 참가를 원천 배제하기 위해 법적 싱글 서약서를 징구하며 위반 시 강력한 민·형사상 책임을 묻습니다.
+                기혼자나 교제 중인 분의 참가를 원천 배제하기 위해 미혼(싱글) 서약 확인 절차를 거치며 허위 사실 기재 시 즉시 이용이 영구 제한됩니다.
               </p>
             </div>
 
