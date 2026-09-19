@@ -364,7 +364,7 @@ export const SAMPLE_MALE_CARD = {
   religion: '무교',
   idealType: '여성스럽고 차분하며 자기관리 잘하고, 대화가 편안하면서 서로 배려할 수 있는 분',
   selfIntro: '꾸준한 자기관리와 안정적인 직업, 탄탄한 생활 기반이 강점입니다. 책임감 있게 관계를 이어가며, 편안한 대화와 배려, 신뢰를 바탕으로 꽤 오래 만나는 연애를 중요하게 생각합니다.',
-  profileImage: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80',
+  profileImage: 'https://images.unsplash.com/photo-1544168190-79c17527004f?auto=format&fit=crop&w=400&q=80',
 };
 
 export const SAMPLE_FEMALE_CARD = {
@@ -389,5 +389,5 @@ export const SAMPLE_FEMALE_CARD = {
   religion: '무교',
   idealType: '유머 코드가 맞고 티키타카가 잘 통하며, 본인 일에 열정적인 다정한 분',
   selfIntro: '주말엔 예쁜 카페나 전시회를 다니며 소소한 일상을 기록하는 것을 좋아합니다. 서로에게 긍정적인 원동력이 되어줄 수 있는 따뜻한 인연을 만나고 싶어요!',
-  profileImage: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
+  profileImage: 'https://images.unsplash.com/photo-1696956994811-95c0a29c917c?auto=format&fit=crop&w=400&q=80',
 };
