@@ -19,6 +19,7 @@ import {
   MessageCircle,
   Heart,
   User,
+  Search,
 } from 'lucide-react';
 import {
   SETTING_REGIONS,
@@ -367,10 +368,17 @@ function ApplyFormContent() {
           <ProfileCard data={formData} showWatermark={true} />
         </div>
 
-        <div className="text-center pt-4">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-4">
+          <Link
+            href={`/status?receiptNumber=${encodeURIComponent(receiptNumber)}`}
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-full font-black text-sm text-white bg-gradient-to-r from-[#623898] to-[#8C52FF] hover:from-[#512784] hover:to-[#7637E4] transition-all shadow-md active:scale-98"
+          >
+            <Search className="w-4 h-4" />
+            <span>내 신청 현황 & 카드 확인하기</span>
+          </Link>
           <Link
             href="/"
-            className="inline-flex items-center justify-center px-8 py-3.5 rounded-full font-black text-sm text-white bg-neutral-900 hover:bg-neutral-800 transition-all shadow-md"
+            className="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3.5 rounded-full font-bold text-sm text-neutral-700 bg-neutral-100 hover:bg-neutral-200 transition-all"
           >
             소개남녀 메인으로 이동
           </Link>

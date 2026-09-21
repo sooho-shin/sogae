@@ -26,9 +26,14 @@ import {
   Send,
   Share2,
   Trash2,
+  Download,
+  Users,
+  ArrowRightLeft,
+  Check,
 } from 'lucide-react';
 import { AdminApplication, ApplicationStatus } from '@/types/admin';
 import ProfileCard from '@/components/ProfileCard';
+import { toPng } from 'html-to-image';
 
 export default function AdminPage() {
   // Authentication State
@@ -57,6 +62,13 @@ export default function AdminPage() {
   const [selectedAppForDetail, setSelectedAppForDetail] = useState<AdminApplication | null>(null);
   const [selectedPhotoForZoom, setSelectedPhotoForZoom] = useState<string | null>(null);
   const [copiedText, setCopiedText] = useState<string>('');
+
+  // 1:1 Matching Pairing Workbench State
+  const [isPairingModalOpen, setIsPairingModalOpen] = useState<boolean>(false);
+  const [selectedMaleForPair, setSelectedMaleForPair] = useState<AdminApplication | null>(null);
+  const [selectedFemaleForPair, setSelectedFemaleForPair] = useState<AdminApplication | null>(null);
+  const [pairingSuccess, setPairingSuccess] = useState<boolean>(false);
+  const [isDownloadingCard, setIsDownloadingCard] = useState<boolean>(false);
 
   // Check login on mount
   useEffect(() => {
@@ -170,7 +182,111 @@ export default function AdminPage() {
     if (typeof navigator !== 'undefined') {
       navigator.clipboard.writeText(text);
       setCopiedText(label);
-      setTimeout(() => setCopiedText(''), 2000);
+      setTimeout(() => setCopiedText(''), 2500);
+    }
+  };
+
+  // Profile Card PNG Download helper
+  const handleDownloadCard = async (elementId: string, filename: string) => {
+    const node = document.getElementById(elementId);
+    if (!node) {
+      alert('카드 요소를 찾을 수 없습니다.');
+      return;
+    }
+    setIsDownloadingCard(true);
+    try {
+      const dataUrl = await toPng(node, {
+        pixelRatio: 2,
+        backgroundColor: '#ffffff',
+        cacheBust: true,
+      });
+      const link = document.createElement('a');
+      link.download = `${filename}.png`;
+      link.href = dataUrl;
+      link.click();
+    } catch (err) {
+      console.error('카드 이미지 저장 실패:', err);
+      alert('카드 이미지 다운로드 중 오류가 발생했습니다.');
+    } finally {
+      setIsDownloadingCard(false);
+    }
+  };
+
+  // CSV Export helper
+  const handleExportCSV = () => {
+    if (filteredApps.length === 0) {
+      alert('내보낼 데이터가 없습니다.');
+      return;
+    }
+
+    const headers = [
+      '접수번호',
+      '신청일시',
+      '진행상태',
+      '실명',
+      '닉네임',
+      '성별',
+      '연락처',
+      '카카오톡ID',
+      '생년월일(년생)',
+      '키(cm)',
+      '지역',
+      '직군',
+      '직무',
+      '직장명',
+      'MBTI',
+      '체형',
+      '취미특기',
+      '이상형',
+    ];
+
+    const rows = filteredApps.map((app) => [
+      `"${app.receiptNumber}"`,
+      `"${app.appliedAt}"`,
+      `"${app.status}"`,
+      `"${app.name}"`,
+      `"${app.nickname || app.name}"`,
+      `"${app.gender === 'male' ? '남성' : '여성'}"`,
+      `"${app.phone}"`,
+      `"${app.kakaoId || ''}"`,
+      `"${app.birthYear || app.birthDate}"`,
+      `"${app.height || ''}"`,
+      `"${app.location || app.region}"`,
+      `"${app.jobCategory || ''}"`,
+      `"${app.jobRole || ''}"`,
+      `"${app.companyName || ''}"`,
+      `"${app.mbti || ''}"`,
+      `"${app.bodyTypeFeature || app.bodyType || ''}"`,
+      `"${(app.hobbiesSpecialty || app.interests.join(', ')).replace(/"/g, '""')}"`,
+      `"${(app.idealType || '').replace(/"/g, '""')}"`,
+    ]);
+
+    const csvContent = '\uFEFF' + [headers.join(','), ...rows.map((r) => r.join(','))].join('\r\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `소개남녀_지원자목록_${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // Execute 1:1 Matching Pairing
+  const handleExecutePairing = async () => {
+    if (!selectedMaleForPair || !selectedFemaleForPair) {
+      alert('남성 및 여성 회원을 모두 선택해 주세요.');
+      return;
+    }
+
+    try {
+      await Promise.all([
+        handleStatusChange(selectedMaleForPair.id, '매칭제안중'),
+        handleStatusChange(selectedFemaleForPair.id, '매칭제안중'),
+      ]);
+      setPairingSuccess(true);
+    } catch (err) {
+      console.error('매칭 페어링 실패:', err);
+      alert('페어링 상태 변경 중 오류가 발생했습니다.');
     }
   };
 
@@ -477,16 +593,41 @@ export default function AdminPage() {
 
         {/* Applications Table Card */}
         <div className="bg-white rounded-2xl border border-neutral-200/80 shadow-xs overflow-hidden">
-          <div className="px-6 py-4 border-b border-neutral-200 flex items-center justify-between">
+          <div className="px-6 py-4 border-b border-neutral-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <h2 className="font-black text-base text-neutral-900">1:1 소개팅 지원자 명단</h2>
               <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-purple-100 text-[#623898]">
                 검색결과: {filteredApps.length}건
               </span>
             </div>
-            <span className="text-xs text-neutral-500 font-medium">
-              페이지 {currentPage} / {totalPages}
-            </span>
+            
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                type="button"
+                onClick={() => {
+                  setPairingSuccess(false);
+                  setIsPairingModalOpen(true);
+                }}
+                className="px-3.5 py-1.5 rounded-xl text-xs font-black text-white bg-gradient-to-r from-[#623898] to-[#8C52FF] hover:opacity-90 shadow-sm flex items-center gap-1.5 transition-all active:scale-98"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>1:1 매칭 페어링 워크벤치</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleExportCSV}
+                className="px-3 py-1.5 rounded-xl text-xs font-bold text-neutral-700 bg-neutral-100 hover:bg-neutral-200 flex items-center gap-1.5 transition-colors"
+                title="현재 검색된 지원자 목록 CSV 다운로드"
+              >
+                <Download className="w-3.5 h-3.5 text-neutral-600" />
+                <span>엑셀(CSV) 내보내기</span>
+              </button>
+
+              <span className="text-xs text-neutral-400 font-medium hidden md:inline ml-2">
+                페이지 {currentPage} / {totalPages}
+              </span>
+            </div>
           </div>
 
           {currentPaginatedApps.length === 0 ? (
@@ -749,18 +890,42 @@ export default function AdminPage() {
             </div>
 
             {/* Modal Body: ProfileCard itself */}
-            <div className="p-4 sm:p-6 bg-neutral-100 flex justify-center">
-              <ProfileCard data={selectedAppForCard} showWatermark={true} />
+            <div className="p-4 sm:p-6 bg-neutral-100 flex flex-col items-center gap-4">
+              <div className="w-full flex items-center justify-between">
+                <span className="text-xs text-neutral-500 font-bold">1:1 소개팅 익명 카드</span>
+                <button
+                  type="button"
+                  disabled={isDownloadingCard}
+                  onClick={() =>
+                    handleDownloadCard(
+                      'admin-preview-card',
+                      `소개남녀_${selectedAppForCard.nickname || selectedAppForCard.name}_프로필카드`
+                    )
+                  }
+                  className="px-3 py-1.5 rounded-xl text-xs font-bold text-neutral-800 bg-white border border-neutral-300 hover:bg-neutral-50 flex items-center gap-1.5 shadow-xs transition-all active:scale-98"
+                >
+                  <Download className={`w-3.5 h-3.5 text-[#623898] ${isDownloadingCard ? 'animate-bounce' : ''}`} />
+                  <span>{isDownloadingCard ? '카드 생성 중...' : '카드 이미지(PNG) 저장'}</span>
+                </button>
+              </div>
+
+              <div className="overflow-auto max-w-full flex justify-center py-2">
+                <ProfileCard
+                  data={selectedAppForCard}
+                  cardId="admin-preview-card"
+                  showWatermark={true}
+                />
+              </div>
             </div>
 
-            {/* Modal Footer: Quick Kakao Proposal Copy Action */}
+            {/* Modal Footer: Quick Kakao Proposal & Success Copy Actions */}
             <div className="p-5 bg-white border-t border-neutral-200 space-y-3">
               <div className="flex items-center justify-between text-xs">
                 <span className="font-bold text-neutral-600">
-                  교환용 카톡 ID: <strong className="text-neutral-900">{selectedAppForCard.kakaoId}</strong>
+                  교환용 카톡 ID: <strong className="text-[#623898] font-extrabold">{selectedAppForCard.kakaoId}</strong>
                 </span>
-                <span className="font-bold text-[#623898]">
-                  현재 상태: {selectedAppForCard.status}
+                <span className="font-bold text-neutral-700">
+                  현재 상태: <span className="font-black text-[#623898]">{selectedAppForCard.status}</span>
                 </span>
               </div>
 
@@ -772,7 +937,7 @@ export default function AdminPage() {
                   copyToClipboard(msg, 'proposal-msg');
                   handleStatusChange(selectedAppForCard.id, '매칭제안중');
                 }}
-                className="w-full py-3 px-4 rounded-xl font-black text-xs sm:text-sm text-white bg-gradient-to-r from-[#623898] to-[#8C52FF] hover:opacity-95 shadow-md flex items-center justify-center gap-2 transition-all active:scale-98"
+                className="w-full py-2.5 px-4 rounded-xl font-black text-xs sm:text-sm text-white bg-gradient-to-r from-[#623898] to-[#8C52FF] hover:opacity-95 shadow-xs flex items-center justify-center gap-2 transition-all active:scale-98"
               >
                 <Send className="w-4 h-4" />
                 <span>&ldquo;이분은 어떠신가요?&rdquo; 카톡 제안 멘트 복사 &amp; 제안중 전환</span>
@@ -780,6 +945,25 @@ export default function AdminPage() {
               {copiedText === 'proposal-msg' && (
                 <p className="text-center text-xs text-emerald-600 font-bold animate-fade-in">
                   ✓ 카톡 제안 멘트가 복사되었습니다! 상대방에게 붙여넣기하여 전송하세요.
+                </p>
+              )}
+
+              {/* Copy "매칭 성사 안내 (카톡 ID 전달)" template */}
+              <button
+                type="button"
+                onClick={() => {
+                  const msg = `[소개남녀 1:1 매칭 성사 안내 🎉]\n안녕하세요, 소개남녀 매니저입니다.\n두 분 모두 서로의 프로필 카드에 호감을 표현해 주셔서 1:1 매칭이 성공적으로 성사되었습니다!\n\n📌 매칭 상대 프로필:\n- 닉네임: ${selectedAppForCard.nickname || selectedAppForCard.name}\n- 교환용 카카오톡 ID: ${selectedAppForCard.kakaoId}\n- 지역/직무: ${selectedAppForCard.location} / ${selectedAppForCard.jobRole}\n\n서로에게 정중하고 설레는 첫인사를 건네보세요. 좋은 인연이 되시길 진심으로 응원합니다! :)`;
+                  copyToClipboard(msg, 'matched-msg');
+                  handleStatusChange(selectedAppForCard.id, '상호수락(카톡교환)');
+                }}
+                className="w-full py-2.5 px-4 rounded-xl font-bold text-xs text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 flex items-center justify-center gap-2 transition-all active:scale-98"
+              >
+                <MessageCircle className="w-4 h-4 text-emerald-600" />
+                <span>&ldquo;매칭 성사 (카톡 ID 전달)&rdquo; 멘트 복사 &amp; 성사 전환</span>
+              </button>
+              {copiedText === 'matched-msg' && (
+                <p className="text-center text-xs text-emerald-600 font-bold animate-fade-in">
+                  ✓ 매칭 성사 멘트가 복사되었습니다!
                 </p>
               )}
 
@@ -991,6 +1175,431 @@ export default function AdminPage() {
                       <CheckCircle2 className="w-3.5 h-3.5" /> 동의 완료
                     </span>
                   </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ================= 6. 1:1 MATCHING PAIRING WORKBENCH MODAL ================= */}
+      {isPairingModalOpen && (
+        <div
+          className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 overflow-y-auto"
+          onClick={() => setIsPairingModalOpen(false)}
+        >
+          <div
+            className="relative max-w-6xl w-full bg-neutral-900 rounded-3xl shadow-2xl border border-neutral-700/80 overflow-hidden my-6 flex flex-col max-h-[90vh]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Workbench Header */}
+            <div className="bg-gradient-to-r from-[#201335] via-[#3d1e6d] to-[#623898] p-5 sm:p-6 text-white flex items-center justify-between border-b border-purple-500/20 shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center backdrop-blur-md">
+                  <Sparkles className="w-5 h-5 text-amber-300" />
+                </div>
+                <div>
+                  <h3 className="text-lg sm:text-xl font-black flex items-center gap-2">
+                    1:1 매칭 페어링 워크벤치
+                  </h3>
+                  <p className="text-xs text-purple-200">
+                    남성·여성 지원자를 비교 선택하여 1:1 매칭 제안 페어를 구성하고 카톡 제안 멘트를 원클릭 복사합니다.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsPairingModalOpen(false)}
+                className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Workbench Top: Match Pair Comparison Banner */}
+            <div className="p-4 sm:p-5 bg-neutral-950/80 border-b border-neutral-800 shrink-0">
+              <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
+                {/* Male Selection Summary */}
+                <div
+                  className={`flex-1 p-3.5 rounded-2xl border transition-all flex items-center gap-3 ${
+                    selectedMaleForPair
+                      ? 'bg-blue-950/40 border-blue-500/50 shadow-sm'
+                      : 'bg-neutral-900/60 border-neutral-800 border-dashed text-neutral-500'
+                  }`}
+                >
+                  {selectedMaleForPair ? (
+                    <>
+                      {selectedMaleForPair.profileImage ? (
+                        <img
+                          src={selectedMaleForPair.profileImage}
+                          alt={selectedMaleForPair.name}
+                          className="w-12 h-14 rounded-xl object-cover border border-blue-400/40 shrink-0"
+                        />
+                      ) : (
+                        <div className="w-12 h-14 rounded-xl bg-blue-900/40 flex items-center justify-center text-xs text-blue-300 font-bold shrink-0">
+                          남성
+                        </div>
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-black text-white text-sm truncate">
+                            {selectedMaleForPair.nickname || selectedMaleForPair.name}
+                          </span>
+                          <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300">
+                            {selectedMaleForPair.birthYear || selectedMaleForPair.birthDate.slice(2, 4)}년생
+                          </span>
+                        </div>
+                        <p className="text-xs text-neutral-300 truncate">
+                          📍 {selectedMaleForPair.location} · {selectedMaleForPair.jobRole || selectedMaleForPair.jobCategory}
+                        </p>
+                        <p className="text-[11px] text-blue-300 font-bold">
+                          카톡ID: {selectedMaleForPair.kakaoId} ({selectedMaleForPair.height}cm / {selectedMaleForPair.mbti})
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedMaleForPair(null)}
+                        className="text-neutral-400 hover:text-white p-1"
+                        title="선택 해제"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </>
+                  ) : (
+                    <div className="text-center w-full py-2 text-xs">
+                      <p className="font-bold text-neutral-400">좌측 목록에서 남성 지원자를 선택하세요</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* VS Center Indicator */}
+                <div className="flex items-center justify-center shrink-0">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 flex items-center justify-center text-white font-black text-xs shadow-lg shadow-purple-500/30">
+                    <Heart className="w-5 h-5 fill-white" />
+                  </div>
+                </div>
+
+                {/* Female Selection Summary */}
+                <div
+                  className={`flex-1 p-3.5 rounded-2xl border transition-all flex items-center gap-3 ${
+                    selectedFemaleForPair
+                      ? 'bg-pink-950/40 border-pink-500/50 shadow-sm'
+                      : 'bg-neutral-900/60 border-neutral-800 border-dashed text-neutral-500'
+                  }`}
+                >
+                  {selectedFemaleForPair ? (
+                    <>
+                      {selectedFemaleForPair.profileImage ? (
+                        <img
+                          src={selectedFemaleForPair.profileImage}
+                          alt={selectedFemaleForPair.name}
+                          className="w-12 h-14 rounded-xl object-cover border border-pink-400/40 shrink-0"
+                        />
+                      ) : (
+                        <div className="w-12 h-14 rounded-xl bg-pink-900/40 flex items-center justify-center text-xs text-pink-300 font-bold shrink-0">
+                          여성
+                        </div>
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-black text-white text-sm truncate">
+                            {selectedFemaleForPair.nickname || selectedFemaleForPair.name}
+                          </span>
+                          <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-pink-500/20 text-pink-300">
+                            {selectedFemaleForPair.birthYear || selectedFemaleForPair.birthDate.slice(2, 4)}년생
+                          </span>
+                        </div>
+                        <p className="text-xs text-neutral-300 truncate">
+                          📍 {selectedFemaleForPair.location} · {selectedFemaleForPair.jobRole || selectedFemaleForPair.jobCategory}
+                        </p>
+                        <p className="text-[11px] text-pink-300 font-bold">
+                          카톡ID: {selectedFemaleForPair.kakaoId} ({selectedFemaleForPair.height}cm / {selectedFemaleForPair.mbti})
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedFemaleForPair(null)}
+                        className="text-neutral-400 hover:text-white p-1"
+                        title="선택 해제"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </>
+                  ) : (
+                    <div className="text-center w-full py-2 text-xs">
+                      <p className="font-bold text-neutral-400">우측 목록에서 여성 지원자를 선택하세요</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Pairing Action Bar */}
+              {selectedMaleForPair && selectedFemaleForPair && (
+                <div className="mt-4 pt-4 border-t border-neutral-800 space-y-3">
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+                    <div className="flex items-center gap-2 text-xs">
+                      <span className="font-extrabold text-neutral-400">매칭 진단:</span>
+                      <span className="px-2 py-0.5 rounded bg-neutral-800 text-neutral-200 font-bold">
+                        나이차:{' '}
+                        {Math.abs(
+                          parseInt(selectedMaleForPair.birthYear || selectedMaleForPair.birthDate.slice(0, 4)) -
+                            parseInt(selectedFemaleForPair.birthYear || selectedFemaleForPair.birthDate.slice(0, 4))
+                        )}
+                        세
+                      </span>
+                      <span
+                        className={`px-2 py-0.5 rounded font-bold ${
+                          selectedMaleForPair.region === selectedFemaleForPair.region
+                            ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+                            : 'bg-neutral-800 text-neutral-300'
+                        }`}
+                      >
+                        지역: {selectedMaleForPair.region} ↔ {selectedFemaleForPair.region}
+                      </span>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleExecutePairing}
+                      className="w-full sm:w-auto px-5 py-2.5 rounded-xl font-black text-xs sm:text-sm text-white bg-gradient-to-r from-[#623898] to-[#8C52FF] hover:from-[#522c82] hover:to-[#7943e0] shadow-lg shadow-purple-900/40 flex items-center justify-center gap-2 transition-all active:scale-98"
+                    >
+                      <Sparkles className="w-4 h-4 text-amber-300" />
+                      <span>두 사람 1:1 매칭 제안 확정 (양측 상태 '매칭제안중' 변경)</span>
+                    </button>
+                  </div>
+
+                  {pairingSuccess && (
+                    <div className="p-3.5 rounded-2xl bg-emerald-950/40 border border-emerald-500/30 space-y-2 animate-fade-in">
+                      <p className="text-xs font-black text-emerald-300 flex items-center gap-1.5">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                        양측 상태가 [매칭제안중]으로 확정되었습니다! 아래 템플릿을 복사하여 각 회원에게 카카오톡으로 전송해 보세요.
+                      </p>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
+                        {/* 1. Male Kakao Proposal */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const msg = `[소개남녀 1:1 매칭 제안]\n안녕하세요 ${selectedMaleForPair.name}님, 소개남녀 매니저입니다!\n회원님의 취향과 이상형에 맞는 여성분의 1:1 프로필 카드를 보내드립니다.\n\n이분은 어떠신가요? :)\n\n📌 상대 프로필 요약: ${selectedFemaleForPair.nickname} (${selectedFemaleForPair.birthYear || selectedFemaleForPair.birthDate.slice(2, 4)}년생 / ${selectedFemaleForPair.jobRole} / ${selectedFemaleForPair.location})\n\n프로필 카드를 확인해보시고, 마음에 드시면 본 메시지에 'OK'라고 답장 남겨주세요! 상대방도 수락 시 카카오톡 ID를 교환해 드립니다.`;
+                            copyToClipboard(msg, 'pair-male-proposal');
+                          }}
+                          className="py-2 px-3 rounded-xl text-xs font-extrabold bg-blue-900/40 hover:bg-blue-800/60 border border-blue-500/40 text-blue-200 flex items-center justify-center gap-1.5 transition-colors"
+                        >
+                          <Copy className="w-3.5 h-3.5" />
+                          <span>남성({selectedMaleForPair.nickname})용 제안문 복사</span>
+                        </button>
+
+                        {/* 2. Female Kakao Proposal */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const msg = `[소개남녀 1:1 매칭 제안]\n안녕하세요 ${selectedFemaleForPair.name}님, 소개남녀 매니저입니다!\n회원님의 취향과 이상형에 맞는 남성분의 1:1 프로필 카드를 보내드립니다.\n\n이분은 어떠신가요? :)\n\n📌 상대 프로필 요약: ${selectedMaleForPair.nickname} (${selectedMaleForPair.birthYear || selectedMaleForPair.birthDate.slice(2, 4)}년생 / ${selectedMaleForPair.jobRole} / ${selectedMaleForPair.location})\n\n프로필 카드를 확인해보시고, 마음에 드시면 본 메시지에 'OK'라고 답장 남겨주세요! 상대방도 수락 시 카카오톡 ID를 교환해 드립니다.`;
+                            copyToClipboard(msg, 'pair-female-proposal');
+                          }}
+                          className="py-2 px-3 rounded-xl text-xs font-extrabold bg-pink-900/40 hover:bg-pink-800/60 border border-pink-500/40 text-pink-200 flex items-center justify-center gap-1.5 transition-colors"
+                        >
+                          <Copy className="w-3.5 h-3.5" />
+                          <span>여성({selectedFemaleForPair.nickname})용 제안문 복사</span>
+                        </button>
+
+                        {/* 3. Mutual Success Template */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const msg = `[소개남녀 1:1 매칭 최종 성사 안내 🎉]\n두 분 모두 서로의 프로필 카드에 'OK'를 답장해 주셔서 매칭이 최종 성사되었습니다!\n\n📌 매칭 상대 정보:\n- 남성: ${selectedMaleForPair.nickname} (카톡: ${selectedMaleForPair.kakaoId})\n- 여성: ${selectedFemaleForPair.nickname} (카톡: ${selectedFemaleForPair.kakaoId})\n\n서로에게 매너 있고 설레는 첫 연락을 건네보세요. 좋은 만남 되시길 응원합니다! :)`;
+                            copyToClipboard(msg, 'pair-mutual-success');
+                          }}
+                          className="py-2 px-3 rounded-xl text-xs font-extrabold bg-emerald-900/40 hover:bg-emerald-800/60 border border-emerald-500/40 text-emerald-200 flex items-center justify-center gap-1.5 transition-colors"
+                        >
+                          <MessageCircle className="w-3.5 h-3.5" />
+                          <span>상호성사(카톡ID교환) 안내문 복사</span>
+                        </button>
+                      </div>
+
+                      {copiedText && (
+                        <p className="text-center text-xs text-emerald-400 font-bold pt-1">
+                          ✓ 클립보드에 복사되었습니다! 카카오톡 대화창에 붙여넣으세요.
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Workbench Body: Dual List (Male vs Female) */}
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-6 bg-neutral-900">
+              {/* Left Column: Male Candidates */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between pb-2 border-b border-neutral-800">
+                  <h4 className="font-extrabold text-sm text-blue-300 flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
+                    남성 지원자 풀 ({applications.filter((a) => a.gender === 'male').length}명)
+                  </h4>
+                  <span className="text-[11px] text-neutral-400">클릭하여 매칭 대상 선택</span>
+                </div>
+
+                <div className="space-y-2.5 max-h-[480px] overflow-y-auto pr-1">
+                  {applications
+                    .filter((a) => a.gender === 'male')
+                    .map((app) => {
+                      const isSelected = selectedMaleForPair?.id === app.id;
+                      return (
+                        <div
+                          key={app.id}
+                          onClick={() => setSelectedMaleForPair(app)}
+                          className={`p-3 rounded-2xl border transition-all cursor-pointer flex items-center gap-3 ${
+                            isSelected
+                              ? 'bg-blue-900/40 border-blue-400 ring-2 ring-blue-500/50 shadow-md'
+                              : 'bg-neutral-800/60 border-neutral-700/60 hover:border-neutral-600 hover:bg-neutral-800'
+                          }`}
+                        >
+                          {app.profileImage ? (
+                            <img
+                              src={app.profileImage}
+                              alt={app.name}
+                              className="w-12 h-16 rounded-xl object-cover border border-neutral-700 shrink-0"
+                            />
+                          ) : (
+                            <div className="w-12 h-16 rounded-xl bg-neutral-700 flex items-center justify-center text-xs text-neutral-400 shrink-0">
+                              무사진
+                            </div>
+                          )}
+
+                          <div className="min-w-0 flex-1 space-y-0.5">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-1.5">
+                                <span className="font-black text-white text-sm">
+                                  {app.nickname || app.name}
+                                </span>
+                                <span className="text-[10px] text-neutral-400">({app.name})</span>
+                              </div>
+                              <span
+                                className={`text-[10px] font-black px-1.5 py-0.5 rounded ${
+                                  app.status === '상호수락(카톡교환)'
+                                    ? 'bg-emerald-500/20 text-emerald-300'
+                                    : app.status === '매칭제안중'
+                                    ? 'bg-indigo-500/20 text-indigo-300'
+                                    : 'bg-purple-500/20 text-purple-300'
+                                }`}
+                              >
+                                {app.status}
+                              </span>
+                            </div>
+
+                            <p className="text-xs text-neutral-300">
+                              {app.birthYear || app.birthDate.slice(2, 4)}년생 · {app.height}cm · 📍 {app.location}
+                            </p>
+                            <p className="text-xs text-neutral-400 truncate">
+                              직무: <span className="text-neutral-200">{app.jobRole || app.jobCategory}</span> ({app.companyName || '비공개'})
+                            </p>
+                            <p className="text-[11px] text-purple-300 truncate">
+                              MBTI: {app.mbti} · 이상형: {app.idealType || '미입력'}
+                            </p>
+                          </div>
+
+                          <div className="shrink-0">
+                            <button
+                              type="button"
+                              className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
+                                isSelected
+                                  ? 'bg-blue-500 text-white shadow-sm'
+                                  : 'bg-neutral-700 text-neutral-400 hover:bg-neutral-600'
+                              }`}
+                            >
+                              {isSelected ? <Check className="w-4 h-4" /> : '+'}
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              </div>
+
+              {/* Right Column: Female Candidates */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between pb-2 border-b border-neutral-800">
+                  <h4 className="font-extrabold text-sm text-pink-300 flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-pink-500"></span>
+                    여성 지원자 풀 ({applications.filter((a) => a.gender === 'female').length}명)
+                  </h4>
+                  <span className="text-[11px] text-neutral-400">클릭하여 매칭 대상 선택</span>
+                </div>
+
+                <div className="space-y-2.5 max-h-[480px] overflow-y-auto pr-1">
+                  {applications
+                    .filter((a) => a.gender === 'female')
+                    .map((app) => {
+                      const isSelected = selectedFemaleForPair?.id === app.id;
+                      return (
+                        <div
+                          key={app.id}
+                          onClick={() => setSelectedFemaleForPair(app)}
+                          className={`p-3 rounded-2xl border transition-all cursor-pointer flex items-center gap-3 ${
+                            isSelected
+                              ? 'bg-pink-900/40 border-pink-400 ring-2 ring-pink-500/50 shadow-md'
+                              : 'bg-neutral-800/60 border-neutral-700/60 hover:border-neutral-600 hover:bg-neutral-800'
+                          }`}
+                        >
+                          {app.profileImage ? (
+                            <img
+                              src={app.profileImage}
+                              alt={app.name}
+                              className="w-12 h-16 rounded-xl object-cover border border-neutral-700 shrink-0"
+                            />
+                          ) : (
+                            <div className="w-12 h-16 rounded-xl bg-neutral-700 flex items-center justify-center text-xs text-neutral-400 shrink-0">
+                              무사진
+                            </div>
+                          )}
+
+                          <div className="min-w-0 flex-1 space-y-0.5">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-1.5">
+                                <span className="font-black text-white text-sm">
+                                  {app.nickname || app.name}
+                                </span>
+                                <span className="text-[10px] text-neutral-400">({app.name})</span>
+                              </div>
+                              <span
+                                className={`text-[10px] font-black px-1.5 py-0.5 rounded ${
+                                  app.status === '상호수락(카톡교환)'
+                                    ? 'bg-emerald-500/20 text-emerald-300'
+                                    : app.status === '매칭제안중'
+                                    ? 'bg-indigo-500/20 text-indigo-300'
+                                    : 'bg-purple-500/20 text-purple-300'
+                                }`}
+                              >
+                                {app.status}
+                              </span>
+                            </div>
+
+                            <p className="text-xs text-neutral-300">
+                              {app.birthYear || app.birthDate.slice(2, 4)}년생 · {app.height}cm · 📍 {app.location}
+                            </p>
+                            <p className="text-xs text-neutral-400 truncate">
+                              직무: <span className="text-neutral-200">{app.jobRole || app.jobCategory}</span> ({app.companyName || '비공개'})
+                            </p>
+                            <p className="text-[11px] text-purple-300 truncate">
+                              MBTI: {app.mbti} · 이상형: {app.idealType || '미입력'}
+                            </p>
+                          </div>
+
+                          <div className="shrink-0">
+                            <button
+                              type="button"
+                              className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
+                                isSelected
+                                  ? 'bg-pink-500 text-white shadow-sm'
+                                  : 'bg-neutral-700 text-neutral-400 hover:bg-neutral-600'
+                              }`}
+                            >
+                              {isSelected ? <Check className="w-4 h-4" /> : '+'}
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
                 </div>
               </div>
             </div>

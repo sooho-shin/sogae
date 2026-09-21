@@ -26,13 +26,13 @@ export default function Header() {
                 </span>
               </div>
               <span className="text-[11px] text-neutral-500 font-medium hidden sm:inline">
-                서울·경기 2030 오프라인 로테이션 소개팅 1위
+                서울·경기 2030 직장인 1:1 프라이빗 소개팅
               </span>
             </div>
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-7">
+          <nav className="hidden md:flex items-center gap-6">
             <Link
               href="/#program"
               className="text-sm font-semibold text-neutral-700 hover:text-[#623898] transition-colors"
@@ -70,6 +70,12 @@ export default function Header() {
             >
               FAQ
             </Link>
+            <Link
+              href="/status"
+              className="text-sm font-bold text-[#623898] hover:text-[#4F2B7D] transition-colors px-3 py-1 rounded-full bg-purple-50 hover:bg-purple-100 border border-purple-200"
+            >
+              신청 조회
+            </Link>
           </nav>
 
           {/* Header Action CTA */}
@@ -86,10 +92,16 @@ export default function Header() {
           {/* Mobile Menu Button */}
           <div className="flex md:hidden items-center gap-2">
             <Link
-              href="/apply"
-              className="px-3.5 py-1.5 text-xs font-bold text-white bg-[#623898] rounded-full shadow-xs"
+              href="/status"
+              className="px-2.5 py-1 text-xs font-bold text-[#623898] bg-purple-50 border border-purple-200 rounded-full"
             >
-              신청하기
+              조회
+            </Link>
+            <Link
+              href="/apply"
+              className="px-3 py-1 text-xs font-bold text-white bg-[#623898] rounded-full shadow-xs"
+            >
+              신청
             </Link>
             <button
               type="button"
@@ -106,6 +118,13 @@ export default function Header() {
       {/* Mobile Drawer Menu */}
       {mobileMenuOpen && (
         <div className="md:hidden border-t border-neutral-100 bg-white px-4 pt-3 pb-6 space-y-3 shadow-xl">
+          <Link
+            href="/status"
+            onClick={() => setMobileMenuOpen(false)}
+            className="block py-2 text-base font-bold text-[#623898] hover:underline"
+          >
+            🔍 내 신청 내역 및 프로필 카드 조회
+          </Link>
           <Link
             href="/#program"
             onClick={() => setMobileMenuOpen(false)}
@@ -155,7 +174,7 @@ export default function Header() {
               className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-white bg-gradient-to-r from-[#623898] to-[#8C52FF] shadow-md"
             >
               <Sparkles className="w-4 h-4" />
-              로테이션 소개팅 지원하기
+              1:1 프로필 카드 등록하기
             </Link>
           </div>
         </div>

@@ -7,9 +7,10 @@ import { Sparkles, Heart } from 'lucide-react';
 interface ProfileCardProps {
   data?: Partial<ApplicationFormData> | null;
   showWatermark?: boolean;
+  cardId?: string;
 }
 
-export default function ProfileCard({ data, showWatermark = true }: ProfileCardProps) {
+export default function ProfileCard({ data, showWatermark = true, cardId }: ProfileCardProps) {
   const safeData = data || {};
   const isMale = safeData.gender !== 'female';
   const genderTitle = isMale ? '소개팅 남자 프로필' : '소개팅 여자 프로필';
@@ -25,7 +26,7 @@ export default function ProfileCard({ data, showWatermark = true }: ProfileCardP
   const jobDisplay = [safeData.companyName, safeData.jobRole || safeData.jobCategory].filter(Boolean).join(' ') || '직장인';
 
   return (
-    <div className={`w-full max-w-md mx-auto ${themeBg} p-3 sm:p-5 rounded-3xl border ${borderTone} shadow-xl relative select-none font-sans`}>
+    <div id={cardId} className={`w-full max-w-md mx-auto ${themeBg} p-3 sm:p-5 rounded-3xl border ${borderTone} shadow-xl relative select-none font-sans`}>
       {/* Inner White Card */}
       <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-neutral-100 flex flex-col space-y-4">
         {/* Header with rays icon */}
