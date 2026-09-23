@@ -1,8 +1,11 @@
 import type { Metadata } from 'next';
+import Script from 'next/script';
 import './globals.css';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import FloatingCTA from '@/components/FloatingCTA';
+import { AuthProvider } from '@/lib/authContext';
+import KakaoLoginModal from '@/components/KakaoLoginModal';
 
 export const metadata: Metadata = {
   title: '소개남녀 | 2030 직장인 1:1 프라이빗 프로필 매칭 소개팅',
@@ -33,11 +36,20 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ko" className="h-full scroll-smooth">
+      <head>
+        <Script
+          src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js"
+          strategy="afterInteractive"
+        />
+      </head>
       <body className="min-h-full flex flex-col font-sans antialiased selection:bg-purple-200 selection:text-purple-900 bg-[#FAFAFC]">
-        <Header />
-        <main className="flex-1">{children}</main>
-        <Footer />
-        <FloatingCTA />
+        <AuthProvider>
+          <Header />
+          <main className="flex-1">{children}</main>
+          <Footer />
+          <FloatingCTA />
+          <KakaoLoginModal />
+        </AuthProvider>
       </body>
     </html>
   );

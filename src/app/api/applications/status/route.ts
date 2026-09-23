@@ -103,6 +103,7 @@ export async function POST(request: Request) {
     const list = globalThis.__APPLICATIONS_STORE__ || [...INITIAL_APPLICATIONS];
     const match = list.find((app) => {
       if (app.status === '삭제됨') return false;
+      if (app.kakaoUserId && app.kakaoUserId === cleanQuery) return true;
       if (app.receiptNumber.toLowerCase() === cleanQuery.toLowerCase()) return true;
       const appNumericPhone = app.phone.replace(/[^0-9]/g, '');
       if (numericQuery.length >= 8 && appNumericPhone === numericQuery) return true;

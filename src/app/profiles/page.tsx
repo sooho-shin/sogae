@@ -20,10 +20,16 @@ import {
   Eye,
   AlertCircle,
   X,
+  User,
 } from 'lucide-react';
+import { useAuth } from '@/lib/authContext';
+import { useRouter } from 'next/navigation';
 
 function ProfilesContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
+  const { user, isLoggedIn, openLoginModal } = useAuth();
+
   const initialGender = searchParams.get('gender') === 'male' ? 'male' : 'female';
   const initialRegion = (searchParams.get('region') as AvailableRegion) || '전체';
 
@@ -39,6 +45,9 @@ function ProfilesContent() {
   const [senderMessage, setSenderMessage] = useState<string>('');
   const [isSubmittingLike, setIsSubmittingLike] = useState<boolean>(false);
   const [likeResult, setLikeResult] = useState<{ success: boolean; message: string; isMutual?: boolean } | null>(null);
+
+  // Modal State for Missing Profile Card Notice
+  const [showNoProfileModal, setShowNoProfileModal] = useState<boolean>(false);
 
   // Unlocked Partner IDs for the current viewing session (if logged in via receipt)
   const [myAppId, setMyAppId] = useState<string>('');
@@ -63,6 +72,7 @@ function ProfilesContent() {
     loadData();
 
     // Check localStorage for saved receiptNumber
+    // Check localStorage for saved receiptNumber
     if (typeof window !== 'undefined') {
       const savedReceipt = localStorage.getItem('sogaeting_receipt');
       const savedPhone = localStorage.getItem('sogaeting_phone');
@@ -71,18 +81,30 @@ function ProfilesContent() {
     }
   }, []);
 
-  // 2. Fetch match status if senderIdentifier is present
+  // 2. Identify Current User's Application (myApp)
+  const myApp = useMemo(() => {
+    if (applications.length === 0) return null;
+    if (user?.id) {
+      const byKakao = applications.find((a) => a.kakaoUserId && a.kakaoUserId === user.id);
+      if (byKakao) return byKakao;
+    }
+    if (senderIdentifier) {
+      const clean = senderIdentifier.trim();
+      const num = clean.replace(/[^0-9]/g, '');
+      return applications.find(
+        (a) => a.receiptNumber.trim() === clean || (num.length >= 8 && a.phone.replace(/[^0-9]/g, '') === num)
+      ) || null;
+    }
+    return null;
+  }, [applications, user, senderIdentifier]);
+
+  // Sync myAppId and fetch matches when myApp changes
   useEffect(() => {
-    if (!senderIdentifier.trim() || applications.length === 0) return;
-
-    const myApp = applications.find(
-      (a) =>
-        a.receiptNumber.trim() === senderIdentifier.trim() ||
-        a.phone.replace(/[^0-9]/g, '') === senderIdentifier.replace(/[^0-9]/g, '')
-    );
-
     if (myApp) {
       setMyAppId(myApp.id);
+      if (!senderIdentifier) {
+        setSenderIdentifier(myApp.receiptNumber);
+      }
       fetch(`/api/matches?appId=${myApp.id}`)
         .then((res) => res.json())
         .then((json) => {
@@ -92,7 +114,7 @@ function ProfilesContent() {
         })
         .catch(console.error);
     }
-  }, [senderIdentifier, applications]);
+  }, [myApp]);
 
   // 3. Filtered applications by gender, region, age
   const filteredApps = useMemo(() => {
@@ -118,24 +140,44 @@ function ProfilesContent() {
     });
   }, [applications, targetGender, selectedRegion, selectedAgeGroup]);
 
+  // Handle clicking "호감 보내기" on a card
+  const handleClickSendLike = (targetApp: AdminApplication) => {
+    // 1. 미로그인 시 로그인 유도
+    if (!isLoggedIn) {
+      openLoginModal();
+      return;
+    }
+
+    // 2. 로그인은 했으나 내 프로필 카드가 없는 경우
+    if (!myApp) {
+      setShowNoProfileModal(true);
+      return;
+    }
+
+    // 3. 본인 카드인 경우
+    if (myApp.id === targetApp.id) {
+      alert('본인이 등록한 프로필 카드에는 호감을 보낼 수 없습니다.');
+      return;
+    }
+
+    // 4. 모달 열기
+    setSelectedTarget(targetApp);
+    setSenderMessage('');
+    setLikeResult(null);
+  };
+
   // Handle Send Like Submission
   const handleSendLike = async () => {
     if (!selectedTarget) return;
 
-    if (!senderIdentifier.trim()) {
-      alert('회원님의 신청 접수번호(SG-1ON1-...) 또는 휴대폰 번호를 입력해 주세요.');
-      return;
-    }
-
-    // Find sender application
-    const senderApp = applications.find(
+    const senderApp = myApp || applications.find(
       (a) =>
         a.receiptNumber.trim() === senderIdentifier.trim() ||
         a.phone.replace(/[^0-9]/g, '') === senderIdentifier.replace(/[^0-9]/g, '')
     );
 
     if (!senderApp) {
-      alert('입력하신 접수번호 또는 휴대폰 번호로 등록된 지원서를 찾을 수 없습니다. 먼저 1:1 지원서를 작성해 주세요.');
+      alert('등록된 지원서를 찾을 수 없습니다. 먼저 1:1 지원서를 작성해 주세요.');
       return;
     }
 
@@ -222,6 +264,46 @@ function ProfilesContent() {
                 <Unlock className="w-3.5 h-3.5 text-amber-300" />
                 <span>STEP 3. 상호 수락 시 사진 공개!</span>
               </div>
+            </div>
+
+            {/* Auth / Profile Status Action Bar */}
+            <div className="pt-2">
+              {!isLoggedIn ? (
+                <button
+                  type="button"
+                  onClick={openLoginModal}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#FEE500] hover:bg-[#FADA0A] text-[#3C1E1E] font-black text-xs shadow-md transition-all active:scale-98"
+                >
+                  <span>💬 카카오 1초 로그인하고 호감 보내기</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              ) : !myApp ? (
+                <div className="inline-flex flex-col sm:flex-row items-center gap-2 bg-black/25 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/15">
+                  <span className="text-xs text-purple-200">
+                    👋 <strong className="text-white">{user?.nickname}</strong>님, 마음에 드는 이성에게 호감을 보내시려면 먼저 프로필 카드를 등록해 주세요!
+                  </span>
+                  <Link
+                    href="/apply"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-pink-500 hover:bg-pink-600 text-white font-black text-xs shadow-md transition-all"
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>내 프로필 카드 등록</span>
+                  </Link>
+                </div>
+              ) : (
+                <div className="inline-flex flex-col sm:flex-row items-center gap-2 bg-black/25 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/15">
+                  <span className="text-xs text-purple-200">
+                    ✨ <strong className="text-white">{user?.nickname}</strong>님 (내 카드: {myApp.region} · {myApp.jobCategory})
+                  </span>
+                  <Link
+                    href="/status"
+                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 hover:bg-white/30 text-white font-bold text-xs backdrop-blur-xs transition-all"
+                  >
+                    <Eye className="w-3.5 h-3.5" />
+                    <span>내 매칭 현황 보기</span>
+                  </Link>
+                </div>
+              )}
             </div>
           </div>
         </section>
@@ -400,13 +482,15 @@ function ProfilesContent() {
                             신청 현황 페이지에서 상대방의 카카오톡 ID를 확인하세요.
                           </p>
                         </div>
+                      ) : myApp && myApp.id === app.id ? (
+                        <div className="w-full py-3.5 px-4 rounded-2xl font-bold text-xs text-neutral-500 bg-neutral-100 border border-neutral-200 text-center flex items-center justify-center gap-1.5">
+                          <User className="w-4 h-4 text-neutral-400" />
+                          <span>내가 등록한 프로필 카드입니다</span>
+                        </div>
                       ) : (
                         <button
                           type="button"
-                          onClick={() => {
-                            setSelectedTarget(app);
-                            setLikeResult(null);
-                          }}
+                          onClick={() => handleClickSendLike(app)}
                           className="w-full py-3.5 px-4 rounded-2xl font-black text-sm text-white bg-gradient-to-r from-pink-500 via-rose-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 group-hover:scale-[1.01] active:scale-[0.99]"
                         >
                           <Heart className="w-4 h-4 fill-white text-white animate-pulse" />
@@ -491,22 +575,41 @@ function ProfilesContent() {
                 </div>
 
                 <div className="space-y-3 pt-2">
-                  {/* Sender Identifier */}
-                  <div>
-                    <label className="block text-xs font-black text-neutral-800 mb-1">
-                      본인의 접수번호 또는 휴대폰 번호 <span className="text-rose-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="예: SG-1ON1-20260923-XXXX 또는 01012345678"
-                      value={senderIdentifier}
-                      onChange={(e) => setSenderIdentifier(e.target.value)}
-                      className="w-full px-3.5 py-3 rounded-xl border border-neutral-200 text-xs sm:text-sm font-bold focus:border-[#623898] focus:outline-hidden"
-                    />
-                    <p className="text-[11px] text-neutral-400 mt-1">
-                      * 지원서를 작성하셨을 때 발급받으신 번호입니다.
-                    </p>
-                  </div>
+                  {/* Sender Info Display (Auto mapped from logged in user or manual input) */}
+                  {myApp ? (
+                    <div className="p-3.5 rounded-2xl bg-purple-50/90 border border-purple-200/90 flex items-center justify-between">
+                      <div>
+                        <span className="text-[11px] font-bold text-neutral-500">보내는 분 (내 1:1 프로필 카드)</span>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <strong className="text-xs sm:text-sm text-neutral-900 font-black">
+                            {myApp.nickname || myApp.name}
+                          </strong>
+                          <span className="text-[11px] text-neutral-500">
+                            ({myApp.region} · {myApp.jobCategory})
+                          </span>
+                        </div>
+                      </div>
+                      <span className="text-[11px] font-black text-purple-700 bg-purple-100 px-2.5 py-1 rounded-full shrink-0">
+                        연동 완료
+                      </span>
+                    </div>
+                  ) : (
+                    <div>
+                      <label className="block text-xs font-black text-neutral-800 mb-1">
+                        본인의 접수번호 또는 휴대폰 번호 <span className="text-rose-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="예: SG-1ON1-20260923-XXXX 또는 01012345678"
+                        value={senderIdentifier}
+                        onChange={(e) => setSenderIdentifier(e.target.value)}
+                        className="w-full px-3.5 py-3 rounded-xl border border-neutral-200 text-xs sm:text-sm font-bold focus:border-[#623898] focus:outline-hidden"
+                      />
+                      <p className="text-[11px] text-neutral-400 mt-1">
+                        * 지원서를 작성하셨을 때 발급받으신 번호입니다.
+                      </p>
+                    </div>
+                  )}
 
                   {/* Optional Message */}
                   <div>
@@ -558,6 +661,52 @@ function ProfilesContent() {
                 </div>
               </>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* NO PROFILE REGISTERED MODAL */}
+      {showNoProfileModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-purple-100 relative space-y-4 text-center">
+            <button
+              type="button"
+              onClick={() => setShowNoProfileModal(false)}
+              className="absolute top-4 right-4 p-2 text-neutral-400 hover:text-neutral-700 rounded-full"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="w-14 h-14 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center mx-auto shadow-inner">
+              <Sparkles className="w-7 h-7" />
+            </div>
+
+            <div className="space-y-1.5">
+              <h3 className="text-lg sm:text-xl font-black text-neutral-900">
+                1:1 프로필 카드가 필요합니다
+              </h3>
+              <p className="text-xs sm:text-sm text-neutral-600 leading-relaxed max-w-sm mx-auto">
+                상대방에게 호감을 보내시려면 먼저 회원님의 <strong>1:1 프로필 카드</strong>가 등록되어 있어야 합니다.<br />
+                상대방도 회원님의 가치관과 스펙을 확인한 후 수락할 수 있습니다!
+              </p>
+            </div>
+
+            <div className="pt-2 flex flex-col gap-2">
+              <Link
+                href="/apply"
+                className="w-full py-3.5 rounded-2xl font-black text-sm text-white bg-gradient-to-r from-[#623898] to-[#8C52FF] hover:from-[#522884] hover:to-[#7637E4] shadow-md text-center transition-all flex items-center justify-center gap-2"
+              >
+                <Sparkles className="w-4 h-4" />
+                <span>지금 1:1 프로필 카드 등록하기 (3분 소요)</span>
+              </Link>
+              <button
+                type="button"
+                onClick={() => setShowNoProfileModal(false)}
+                className="w-full py-3 rounded-2xl font-bold text-xs text-neutral-600 bg-neutral-100 hover:bg-neutral-200"
+              >
+                닫기
+              </button>
+            </div>
           </div>
         </div>
       )}

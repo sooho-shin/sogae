@@ -33,9 +33,11 @@ import { ApplicationFormData, AvailableRegion } from '@/types';
 import { AdminApplication } from '@/types/admin';
 import ProfileCard from '@/components/ProfileCard';
 import { findProfanity } from '@/utils/badWords';
+import { useAuth } from '@/lib/authContext';
 
 function ApplyFormContent() {
   const searchParams = useSearchParams();
+  const { user, isLoggedIn, openLoginModal } = useAuth();
 
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
@@ -53,6 +55,7 @@ function ApplyFormContent() {
     name: '',
     nickname: '',
     kakaoId: '',
+    kakaoUserId: '',
     gender: 'male',
     birthDate: '',
     birthYear: '',
@@ -104,6 +107,7 @@ function ApplyFormContent() {
       name: app.name || '',
       nickname: app.nickname || app.name || '',
       kakaoId: app.kakaoId || '',
+      kakaoUserId: app.kakaoUserId || user?.id || '',
       gender: app.gender || 'male',
       birthDate: app.birthDate || '',
       birthYear: app.birthYear || '',
@@ -136,6 +140,17 @@ function ApplyFormContent() {
     });
   };
 
+  // Sync Kakao user to formData
+  useEffect(() => {
+    if (user) {
+      setFormData((prev) => ({
+        ...prev,
+        nickname: prev.nickname || user.nickname || '',
+        kakaoUserId: user.id,
+      }));
+    }
+  }, [user]);
+
   // Check if user already registered a card
   useEffect(() => {
     async function checkExistingCard() {
@@ -143,7 +158,8 @@ function ApplyFormContent() {
 
       const receipt = searchParams.get('receiptNumber') || localStorage.getItem('sogaeting_receipt');
       const phone = localStorage.getItem('sogaeting_phone');
-      const query = receipt || phone;
+      const kakaoId = user?.id;
+      const query = receipt || phone || kakaoId;
       const mode = searchParams.get('mode');
 
       if (query) {
@@ -169,7 +185,7 @@ function ApplyFormContent() {
     }
 
     checkExistingCard();
-  }, [searchParams]);
+  }, [searchParams, user]);
 
   // Initialize selected region from URL query
   useEffect(() => {
@@ -642,6 +658,40 @@ function ApplyFormContent() {
   // ================= APPLICATION FORM WIZARD (NEW OR EDIT) =================
   return (
     <div className="max-w-2xl mx-auto py-10 px-4 sm:px-6">
+      {/* KAKAO AUTH STATUS BANNER */}
+      {isLoggedIn && user ? (
+        <div className="mb-6 p-3.5 rounded-2xl bg-amber-50/80 border border-amber-200/80 flex items-center justify-between text-xs sm:text-sm shadow-2xs">
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+            <span className="text-neutral-700">
+              카카오 계정 <strong className="text-neutral-900">{user.nickname}</strong>님으로 로그인되어 카드에 자동 연동됩니다.
+            </span>
+          </div>
+          <span className="text-amber-800 text-xs font-black bg-amber-100/90 px-2.5 py-1 rounded-full shrink-0">
+            1초 연동 완료
+          </span>
+        </div>
+      ) : (
+        <div className="mb-6 p-4 rounded-2xl bg-[#FEE500]/15 border border-[#FEE500]/60 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs sm:text-sm shadow-2xs">
+          <div className="flex items-center gap-2.5 text-neutral-800">
+            <div className="w-7 h-7 rounded-full bg-[#FEE500] flex items-center justify-center text-[#3C1E1E] shrink-0 font-black text-xs shadow-2xs">
+              💬
+            </div>
+            <div>
+              <p className="font-bold text-neutral-900">카카오 1초 간편 로그인 후 등록해 보세요!</p>
+              <p className="text-xs text-neutral-600">로그인하시면 접수번호를 따로 외우지 않아도 내 카드와 호감을 1초 만에 확인/수정할 수 있습니다.</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={openLoginModal}
+            className="w-full sm:w-auto shrink-0 px-4 py-2 rounded-xl bg-[#FEE500] hover:bg-[#FADA0A] text-[#3C1E1E] font-black text-xs shadow-2xs transition-all flex items-center justify-center gap-1.5"
+          >
+            <span>카카오 1초 로그인</span>
+          </button>
+        </div>
+      )}
+
       {/* EDIT MODE BANNER */}
       {isEditMode && (
         <div className="mb-6 p-4 rounded-2xl bg-amber-50 border border-amber-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-amber-900 shadow-xs">

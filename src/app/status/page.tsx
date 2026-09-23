@@ -28,9 +28,11 @@ import ProfileCard from '@/components/ProfileCard';
 import { AdminApplication, ApplicationStatus } from '@/types/admin';
 import { MatchRequest } from '@/types';
 import { toPng } from 'html-to-image';
+import { useAuth } from '@/lib/authContext';
 
 function StatusContent() {
   const searchParams = useSearchParams();
+  const { user, isLoggedIn, openLoginModal } = useAuth();
   const [queryInput, setQueryInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -63,14 +65,23 @@ function StatusContent() {
       .catch(console.error);
   }, []);
 
-  // Auto-search if query param present
+  // Auto-search if query param present or logged in or saved in storage
   useEffect(() => {
-    const q = searchParams.get('query') || searchParams.get('receiptNumber');
-    if (q) {
-      setQueryInput(q);
+    const paramQuery = searchParams.get('query') || searchParams.get('receiptNumber');
+    const storageQuery =
+      typeof window !== 'undefined'
+        ? localStorage.getItem('sogaeting_receipt') || localStorage.getItem('sogaeting_phone')
+        : null;
+    const kakaoQuery = user?.id;
+
+    const q = paramQuery || kakaoQuery || storageQuery;
+    if (q && !application) {
+      if (paramQuery || storageQuery) {
+        setQueryInput(paramQuery || storageQuery || '');
+      }
       handleSearch(q);
     }
-  }, [searchParams]);
+  }, [searchParams, user]);
 
   // Load matches when application is found
   const loadMatches = async (appId: string) => {
@@ -217,8 +228,34 @@ function StatusContent() {
               <strong>나에게 온 호감 수락, 잠금 해제된 상대방 사진, 내 프로필 카드</strong>를 확인하실 수 있습니다.
             </p>
 
+            {/* Kakao Auth Notice */}
+            <div className="pt-2 max-w-xl mx-auto">
+              {isLoggedIn && user ? (
+                <div className="bg-white/15 backdrop-blur-md px-4 py-2.5 rounded-2xl border border-white/20 text-xs text-purple-100 flex items-center justify-between shadow-xs">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                    <span>
+                      카카오 계정 <strong className="text-white">{user.nickname}</strong>님의 프로필 카드로 자동 조회됩니다.
+                    </span>
+                  </div>
+                  <span className="text-[11px] font-black text-amber-300 bg-black/30 px-2 py-0.5 rounded-full shrink-0">
+                    1초 연동 완료
+                  </span>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={openLoginModal}
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full bg-[#FEE500] hover:bg-[#FADA0A] text-[#3C1E1E] font-black text-xs shadow-md transition-all active:scale-98"
+                >
+                  <span>💬 카카오 1초 간편 로그인 (번호 입력 없이 즉시 확인)</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+
             {/* Search Input Box */}
-            <div className="pt-4 max-w-xl mx-auto">
+            <div className="pt-2 max-w-xl mx-auto">
               <form
                 onSubmit={(e) => {
                   e.preventDefault();

@@ -56,6 +56,7 @@ export interface ApplicationFormData {
   name: string;
   nickname: string; // 프로필 카드 닉네임 (예: TTJJ)
   kakaoId: string; // 카카오톡 아이디 (상호 수락 시 교환용)
+  kakaoUserId?: string; // 카카오 간편 로그인 고유 ID (1초 자동 조회 및 계정 연동용)
   gender: 'male' | 'female' | '';
   birthDate: string;
   birthYear: string; // 년생 2자리 (예: 92)
