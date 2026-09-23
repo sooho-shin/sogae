@@ -90,3 +90,19 @@ export interface ApplicationFormData {
   agreementManner: boolean;
   agreementPrivacy: boolean;
 }
+
+export type MatchRequestStatus = 'pending' | 'accepted' | 'rejected';
+
+export interface MatchRequest {
+  id: string;
+  fromAppId: string; // 호감 보낸 신청자 id
+  fromNickname: string;
+  fromGender?: string;
+  toAppId: string; // 호감 받는 대상자 id
+  toNickname: string;
+  toGender?: string;
+  message?: string; // 호감 한줄 메시지
+  status: MatchRequestStatus;
+  createdAt: string; // YYYY.MM.DD HH:mm
+  unlockedAt?: string; // 상호 수락 및 사진 공개된 시각
+}

@@ -65,10 +65,11 @@ export default function Header() {
               생생 후기
             </Link>
             <Link
-              href="/#faq"
-              className="text-sm font-semibold text-neutral-700 hover:text-[#623898] transition-colors"
+              href="/profiles"
+              className="text-sm font-bold text-pink-600 hover:text-pink-700 transition-colors flex items-center gap-1 bg-pink-50 hover:bg-pink-100 px-3 py-1 rounded-full border border-pink-200"
             >
-              FAQ
+              <Heart className="w-3.5 h-3.5 fill-pink-500 text-pink-500" />
+              <span>블라인드 프로필</span>
             </Link>
             <Link
               href="/status"
@@ -124,6 +125,14 @@ export default function Header() {
             className="block py-2 text-base font-bold text-[#623898] hover:underline"
           >
             🔍 내 신청 내역 및 프로필 카드 조회
+          </Link>
+          <Link
+            href="/profiles"
+            onClick={() => setMobileMenuOpen(false)}
+            className="block py-2 text-base font-bold text-pink-600 hover:text-pink-700 flex items-center gap-1.5"
+          >
+            <Heart className="w-4 h-4 fill-pink-500" />
+            <span>이성 블라인드 프로필 둘러보기</span>
           </Link>
           <Link
             href="/#program"

@@ -2,15 +2,16 @@
 
 import React from 'react';
 import { ApplicationFormData } from '@/types';
-import { Sparkles, Heart } from 'lucide-react';
+import { Sparkles, Heart, Lock } from 'lucide-react';
 
 interface ProfileCardProps {
   data?: Partial<ApplicationFormData> | null;
   showWatermark?: boolean;
   cardId?: string;
+  isPhotoLocked?: boolean;
 }
 
-export default function ProfileCard({ data, showWatermark = true, cardId }: ProfileCardProps) {
+export default function ProfileCard({ data, showWatermark = true, cardId, isPhotoLocked = false }: ProfileCardProps) {
   const safeData = data || {};
   const isMale = safeData.gender !== 'female';
   const genderTitle = isMale ? '소개팅 남자 프로필' : '소개팅 여자 프로필';
@@ -46,9 +47,31 @@ export default function ProfileCard({ data, showWatermark = true, cardId }: Prof
 
         {/* Top Section: Photo (Left) + Quick Specs Grid (Right) */}
         <div className="grid grid-cols-12 gap-3 sm:gap-4 items-stretch">
-          {/* Left Photo */}
+          {/* Left Photo (with Blind / Locked Photo Option) */}
           <div className="col-span-5 relative rounded-xl overflow-hidden border-2 border-purple-100 bg-neutral-100 aspect-[3/4] shadow-xs">
-            {safeData.profileImage ? (
+            {isPhotoLocked ? (
+              // Locked Blind Photo UI
+              <div className="w-full h-full relative flex flex-col items-center justify-center bg-gradient-to-br from-purple-100 via-pink-50 to-neutral-200 p-2 text-center overflow-hidden">
+                {safeData.profileImage && (
+                  <img
+                    src={safeData.profileImage}
+                    alt="블라인드 사진"
+                    className="absolute inset-0 w-full h-full object-cover blur-2xl scale-125 opacity-40"
+                  />
+                )}
+                <div className="relative z-10 flex flex-col items-center justify-center">
+                  <div className="w-10 h-10 rounded-full bg-white/90 shadow-md flex items-center justify-center mb-1.5 text-purple-700 animate-pulse">
+                    <Lock className="w-5 h-5 text-purple-700" />
+                  </div>
+                  <span className="text-[10px] font-extrabold text-neutral-800 leading-tight">
+                    블라인드 사진
+                  </span>
+                  <span className="text-[8px] font-bold text-purple-800 mt-0.5 bg-white/80 px-1.5 py-0.5 rounded-full shadow-2xs">
+                    상호 수락 시 공개
+                  </span>
+                </div>
+              </div>
+            ) : safeData.profileImage ? (
               <img
                 src={safeData.profileImage}
                 alt="프로필 사진"
@@ -61,8 +84,8 @@ export default function ProfileCard({ data, showWatermark = true, cardId }: Prof
               </div>
             )}
             {showWatermark && (
-              <div className="absolute bottom-1 right-1 px-1.5 py-0.5 bg-black/40 backdrop-blur-xs rounded text-[9px] font-bold text-white tracking-tighter">
-                소개남녀 검증
+              <div className="absolute bottom-1 right-1 px-1.5 py-0.5 bg-black/50 backdrop-blur-xs rounded text-[9px] font-bold text-white tracking-tighter z-10">
+                {isPhotoLocked ? '🔒 사진 비공개' : '소개남녀 검증'}
               </div>
             )}
           </div>

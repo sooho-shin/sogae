@@ -47,6 +47,10 @@ export default function AdminPage() {
   const [applications, setApplications] = useState<AdminApplication[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
 
+  // Admin Main Tab State
+  const [adminTab, setAdminTab] = useState<'matching' | 'location'>('matching');
+  const [selectedLocation, setSelectedLocation] = useState<string>('흑석동');
+
   // Search & Filter State
   const [searchKeyword, setSearchKeyword] = useState<string>('');
   const [selectedRegionFilter, setSelectedRegionFilter] = useState<string>('전체');
@@ -271,6 +275,64 @@ export default function AdminPage() {
     URL.revokeObjectURL(url);
   };
 
+  // Export CSV for a specific location
+  const handleExportLocationCSV = (locName: string) => {
+    const locApps = applications.filter(
+      (a) => a.region === locName || a.location?.includes(locName)
+    );
+    if (locApps.length === 0) {
+      alert(`'${locName}' 거점에 등록된 지원자가 없습니다.`);
+      return;
+    }
+
+    const headers = [
+      '접수번호',
+      '신청일시',
+      '상태',
+      '이름',
+      '닉네임',
+      '성별',
+      '연락처',
+      '카카오톡ID',
+      '생년월일(년생)',
+      '키(cm)',
+      '거주지',
+      '거점지역',
+      '직장명',
+      '직무',
+      'MBTI',
+      '이상형',
+    ];
+
+    const rows = locApps.map((app) => [
+      `"${app.receiptNumber}"`,
+      `"${app.appliedAt}"`,
+      `"${app.status}"`,
+      `"${app.name}"`,
+      `"${app.nickname || app.name}"`,
+      `"${app.gender === 'male' ? '남성' : '여성'}"`,
+      `"${app.phone}"`,
+      `"${app.kakaoId || ''}"`,
+      `"${app.birthYear || app.birthDate}"`,
+      `"${app.height || ''}"`,
+      `"${app.location || ''}"`,
+      `"${app.region}"`,
+      `"${app.companyName || ''}"`,
+      `"${app.jobRole || ''}"`,
+      `"${app.mbti || ''}"`,
+      `"${(app.idealType || '').replace(/"/g, '""')}"`,
+    ]);
+
+    const csvContent = '\uFEFF' + [headers.join(','), ...rows.map((r) => r.join(','))].join('\r\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `소개남녀_${locName}_거점지원자_${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   // Execute 1:1 Matching Pairing
   const handleExecutePairing = async () => {
     if (!selectedMaleForPair || !selectedFemaleForPair) {
@@ -347,6 +409,24 @@ export default function AdminPage() {
       proposing: applications.filter((a) => a.status === '매칭제안중').length,
       matched: applications.filter((a) => a.status === '상호수락(카톡교환)').length,
     };
+  }, [applications]);
+
+  // 5대 거점 지역 상수 및 통계
+  const LOCATIONS = ['흑석동', '서교동', '합정동', '홍대', '신도림'] as const;
+
+  const locationStats = useMemo(() => {
+    return LOCATIONS.map((loc) => {
+      const locApps = applications.filter((a) => a.region === loc || a.location?.includes(loc));
+      const maleCount = locApps.filter((a) => a.gender === 'male').length;
+      const femaleCount = locApps.filter((a) => a.gender === 'female').length;
+      return {
+        name: loc,
+        total: locApps.length,
+        male: maleCount,
+        female: femaleCount,
+        apps: locApps,
+      };
+    });
   }, [applications]);
 
   if (authChecking) {
@@ -471,17 +551,48 @@ export default function AdminPage() {
 
       {/* Main Content Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-        {/* Statistics Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <div className="bg-white rounded-2xl p-5 border border-neutral-200/80 shadow-xs flex items-center justify-between">
-            <div>
-              <p className="text-xs font-bold text-neutral-500 mb-1">총 등록 회원</p>
-              <h3 className="text-2xl font-black text-neutral-900">{stats.total}명</h3>
-            </div>
-            <div className="w-10 h-10 rounded-xl bg-purple-50 text-[#623898] flex items-center justify-center font-bold">
-              <User className="w-5 h-5" />
-            </div>
-          </div>
+        {/* Admin Navigation Tabs */}
+        <div className="flex items-center gap-2 border-b border-neutral-200 pb-2">
+          <button
+            type="button"
+            onClick={() => setAdminTab('matching')}
+            className={`px-5 py-3 rounded-2xl font-black text-sm transition-all flex items-center gap-2 ${
+              adminTab === 'matching'
+                ? 'bg-[#623898] text-white shadow-md'
+                : 'text-neutral-600 hover:bg-neutral-100'
+            }`}
+          >
+            <Heart className="w-4 h-4 fill-current" />
+            <span>1:1 블라인드 매칭 & 회원 관리</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setAdminTab('location')}
+            className={`px-5 py-3 rounded-2xl font-black text-sm transition-all flex items-center gap-2 ${
+              adminTab === 'location'
+                ? 'bg-[#623898] text-white shadow-md'
+                : 'text-neutral-600 hover:bg-neutral-100'
+            }`}
+          >
+            <MapPin className="w-4 h-4" />
+            <span>장소(거점)별 지원 내역 관리</span>
+          </button>
+        </div>
+
+        {/* ================= TAB 1: 1:1 BLIND MATCHING & MEMBERS ================= */}
+        {adminTab === 'matching' && (
+          <div className="space-y-6">
+            {/* Statistics Cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <div className="bg-white rounded-2xl p-5 border border-neutral-200/80 shadow-xs flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-bold text-neutral-500 mb-1">총 등록 회원</p>
+                  <h3 className="text-2xl font-black text-neutral-900">{stats.total}명</h3>
+                </div>
+                <div className="w-10 h-10 rounded-xl bg-purple-50 text-[#623898] flex items-center justify-center font-bold">
+                  <User className="w-5 h-5" />
+                </div>
+              </div>
 
           <div className="bg-white rounded-2xl p-5 border border-neutral-200/80 shadow-xs flex items-center justify-between">
             <div>
@@ -860,6 +971,181 @@ export default function AdminPage() {
             </div>
           </div>
         </div>
+      </div>
+    )}
+
+      {/* ================= TAB 2: LOCATION-BASED APPLICATIONS ================= */}
+      {adminTab === 'location' && (
+        <div className="space-y-6">
+          {/* 5 Regional Hubs Cards */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
+            {locationStats.map((loc) => {
+              const isSelected = selectedLocation === loc.name;
+              const total = loc.total;
+              const malePct = total > 0 ? Math.round((loc.male / total) * 100) : 50;
+              const femalePct = total > 0 ? 100 - malePct : 50;
+
+              return (
+                <button
+                  key={loc.name}
+                  type="button"
+                  onClick={() => setSelectedLocation(loc.name)}
+                  className={`p-4 rounded-2xl border text-left transition-all relative overflow-hidden flex flex-col justify-between ${
+                    isSelected
+                      ? 'bg-purple-900 text-white border-purple-800 shadow-lg ring-2 ring-purple-500 scale-[1.02]'
+                      : 'bg-white text-neutral-900 border-neutral-200/80 hover:border-purple-200 shadow-xs'
+                  }`}
+                >
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span
+                        className={`text-xs font-black px-2 py-0.5 rounded-md ${
+                          isSelected ? 'bg-white/20 text-purple-200' : 'bg-purple-50 text-[#623898]'
+                        }`}
+                      >
+                        {loc.name}
+                      </span>
+                      <MapPin className={`w-3.5 h-3.5 ${isSelected ? 'text-pink-300' : 'text-neutral-400'}`} />
+                    </div>
+                    <h4 className="text-xl font-black mt-1">
+                      {total}
+                      <span className="text-xs font-bold ml-0.5 opacity-80">명 지원</span>
+                    </h4>
+                  </div>
+
+                  <div className="mt-3 pt-2 border-t border-white/10 space-y-1.5">
+                    <div className="flex items-center justify-between text-[11px] font-bold">
+                      <span className={isSelected ? 'text-blue-200' : 'text-blue-600'}>남 {loc.male}명</span>
+                      <span className={isSelected ? 'text-pink-200' : 'text-pink-600'}>여 {loc.female}명</span>
+                    </div>
+                    {/* Gender Ratio Bar */}
+                    <div className="w-full h-1.5 bg-neutral-200/60 rounded-full overflow-hidden flex">
+                      <div style={{ width: `${malePct}%` }} className="h-full bg-blue-500" />
+                      <div style={{ width: `${femalePct}%` }} className="h-full bg-pink-500" />
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Selected Location Detail Workbench */}
+          {(() => {
+            const currentLocData = locationStats.find((l) => l.name === selectedLocation) || {
+              name: selectedLocation,
+              total: 0,
+              male: 0,
+              female: 0,
+              apps: [],
+            };
+
+            return (
+              <div className="bg-white rounded-3xl border border-neutral-200/80 shadow-sm overflow-hidden">
+                {/* Table Header / Action Bar */}
+                <div className="p-5 sm:p-6 border-b border-neutral-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#FAF9FD]">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-black px-2.5 py-1 rounded-full bg-[#623898] text-white">
+                        거점 지원 관리
+                      </span>
+                      <h3 className="text-lg sm:text-xl font-black text-neutral-900">
+                        {selectedLocation} 거점 지원자 목록 ({currentLocData.total}명)
+                      </h3>
+                    </div>
+                    <p className="text-xs text-neutral-500 mt-1">
+                      해당 장소에 지원한 남성 {currentLocData.male}명, 여성 {currentLocData.female}명의 신청 내역입니다.
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleExportLocationCSV(selectedLocation)}
+                      className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl font-black text-xs text-white bg-emerald-600 hover:bg-emerald-700 shadow-xs transition-all active:scale-98"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      <span>{selectedLocation} 지원자 엑셀(CSV) 다운로드</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Applicants Table */}
+                {currentLocData.apps.length === 0 ? (
+                  <div className="py-16 text-center text-neutral-400 space-y-2">
+                    <MapPin className="w-8 h-8 mx-auto text-neutral-300" />
+                    <p className="text-sm font-bold">아직 {selectedLocation}에 등록된 지원자가 없습니다.</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse text-xs sm:text-sm">
+                      <thead>
+                        <tr className="bg-neutral-50 border-b border-neutral-200 text-neutral-500 font-bold text-xs uppercase tracking-wider">
+                          <th className="py-3 px-4">접수번호 / 신청일</th>
+                          <th className="py-3 px-4">이름 (닉네임)</th>
+                          <th className="py-3 px-4">성별 / 나이</th>
+                          <th className="py-3 px-4">직장 / 직무</th>
+                          <th className="py-3 px-4">키 / MBTI</th>
+                          <th className="py-3 px-4">연락처 / 카톡ID</th>
+                          <th className="py-3 px-4">매칭상태</th>
+                          <th className="py-3 px-4 text-center">프로필 카드</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-neutral-100">
+                        {currentLocData.apps.map((app) => (
+                          <tr key={app.id} className="hover:bg-purple-50/30 transition-colors">
+                            <td className="py-3.5 px-4">
+                              <span className="font-extrabold text-neutral-900 block">{app.receiptNumber}</span>
+                              <span className="text-[11px] text-neutral-400">{app.appliedAt}</span>
+                            </td>
+                            <td className="py-3.5 px-4 font-black text-neutral-900">
+                              {app.name}
+                              <span className="text-xs font-bold text-purple-700 ml-1">
+                                ({app.nickname || app.name})
+                              </span>
+                            </td>
+                            <td className="py-3.5 px-4 font-bold">
+                              <span className={app.gender === 'male' ? 'text-blue-600' : 'text-pink-600'}>
+                                {app.gender === 'male' ? '남성' : '여성'}
+                              </span>
+                              <span className="text-neutral-500 ml-1">({app.birthYear || '95'}년생)</span>
+                            </td>
+                            <td className="py-3.5 px-4">
+                              <span className="font-bold text-neutral-800 block">{app.companyName || '직장인'}</span>
+                              <span className="text-xs text-neutral-500">{app.jobRole || app.jobCategory}</span>
+                            </td>
+                            <td className="py-3.5 px-4 font-bold text-neutral-700">
+                              {app.height ? `${app.height}cm` : '-'} / <span className="text-[#623898]">{app.mbti}</span>
+                            </td>
+                            <td className="py-3.5 px-4">
+                              <span className="font-extrabold text-neutral-900 block">{app.phone}</span>
+                              <span className="text-xs text-purple-700 font-bold">카톡: {app.kakaoId || '미기재'}</span>
+                            </td>
+                            <td className="py-3.5 px-4">
+                              <span className="px-2.5 py-1 rounded-full text-xs font-black bg-purple-100 text-[#623898]">
+                                {app.status}
+                              </span>
+                            </td>
+                            <td className="py-3.5 px-4 text-center">
+                              <button
+                                type="button"
+                                onClick={() => setSelectedAppForCard(app)}
+                                className="px-3 py-1.5 rounded-lg text-xs font-bold text-neutral-700 bg-neutral-100 hover:bg-neutral-200 inline-flex items-center gap-1"
+                              >
+                                <Eye className="w-3.5 h-3.5" />
+                                <span>카드 보기</span>
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+        </div>
+      )}
       </main>
 
       {/* ================= 3. PROFILE CARD PREVIEW MODAL ================= */}

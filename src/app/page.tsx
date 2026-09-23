@@ -79,10 +79,11 @@ export default function HomePage() {
                 <ArrowRight className="w-5 h-5 text-purple-900" />
               </Link>
               <Link
-                href="#profile-showcase"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-4 rounded-full font-bold text-sm sm:text-base text-white/90 bg-white/10 hover:bg-white/15 border border-white/20 backdrop-blur-md transition-all"
+                href="/profiles"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-4 rounded-full font-bold text-sm sm:text-base text-pink-200 bg-pink-500/20 hover:bg-pink-500/30 border border-pink-400/30 backdrop-blur-md transition-all shadow-md"
               >
-                프로필 카드 실물 미리보기
+                <Heart className="w-4 h-4 fill-pink-300 text-pink-300" />
+                <span>이성 블라인드 프로필 둘러보기</span>
               </Link>
             </div>
 
