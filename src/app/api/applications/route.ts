@@ -220,6 +220,111 @@ export async function PATCH(request: Request) {
   }
 }
 
+// PUT: Update full application / profile card details (for user edit mode)
+export async function PUT(request: Request) {
+  try {
+    const body = await request.json();
+    const id = body.id;
+    const receiptNumber = body.receiptNumber;
+
+    if (!id && !receiptNumber) {
+      return NextResponse.json(
+        { success: false, error: '수정할 지원서 ID 또는 접수번호가 필요합니다.' },
+        { status: 400 }
+      );
+    }
+
+    // 0. 금칙어 / 음란성 검사
+    const profanityCheck = validateProfanityInObject(body);
+    if (!profanityCheck.valid) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: `${profanityCheck.fieldName} 항목에 부적절한 단어('${profanityCheck.badWord}')가 포함되어 있어 수정할 수 없습니다.`,
+        },
+        { status: 400 }
+      );
+    }
+
+    // Prepare DB snake_case payload
+    const dbPayload: any = {};
+    if (body.name !== undefined) dbPayload.name = body.name;
+    if (body.nickname !== undefined) dbPayload.nickname = body.nickname;
+    if (body.kakaoId !== undefined) dbPayload.kakao_id = body.kakaoId;
+    if (body.gender !== undefined) dbPayload.gender = body.gender;
+    if (body.birthDate !== undefined) dbPayload.birth_date = body.birthDate;
+    if (body.birthYear !== undefined) dbPayload.birth_year = body.birthYear;
+    if (body.phone !== undefined) dbPayload.phone = body.phone;
+    if (body.location !== undefined) dbPayload.location = body.location;
+    if (body.region !== undefined) dbPayload.region = body.region;
+    if (body.height !== undefined) dbPayload.height = body.height;
+    if (body.bodyType !== undefined) dbPayload.body_type = body.bodyType;
+    if (body.bodyTypeFeature !== undefined) dbPayload.body_type_feature = body.bodyTypeFeature;
+    if (body.eyelid !== undefined) dbPayload.eyelid = body.eyelid;
+    if (body.drinking !== undefined) dbPayload.drinking = body.drinking;
+    if (body.drinkingCapacity !== undefined) dbPayload.drinking_capacity = body.drinkingCapacity;
+    if (body.smoking !== undefined) dbPayload.smoking = body.smoking;
+    if (body.religion !== undefined) dbPayload.religion = body.religion;
+    if (body.jobCategory !== undefined) dbPayload.job_category = body.jobCategory;
+    if (body.companyName !== undefined) dbPayload.company_name = body.companyName;
+    if (body.jobRole !== undefined) dbPayload.job_role = body.jobRole;
+    if (body.mbti !== undefined) dbPayload.mbti = body.mbti;
+    if (body.personality !== undefined) dbPayload.personality = body.personality;
+    if (body.hobbiesSpecialty !== undefined) dbPayload.hobbies_specialty = body.hobbiesSpecialty;
+    if (body.interests !== undefined) dbPayload.interests = body.interests;
+    if (body.idealType !== undefined) dbPayload.ideal_type = body.idealType;
+    if (body.selfIntro !== undefined) dbPayload.self_intro = body.selfIntro;
+    if (body.intro !== undefined) dbPayload.intro = body.intro;
+    if (body.profileImage !== undefined) dbPayload.profile_image = body.profileImage;
+    if (body.verificationType !== undefined) dbPayload.verification_type = body.verificationType;
+    if (body.verificationFile !== undefined) dbPayload.verification_file = body.verificationFile;
+
+    // 1. If Supabase configured, update in Supabase
+    if (isSupabaseConfigured() && supabase) {
+      let query = supabase.from('applications').update(dbPayload);
+      if (id) {
+        query = query.eq('id', id);
+      } else {
+        query = query.eq('receipt_number', receiptNumber);
+      }
+
+      const { data, error } = await query.select().single();
+      if (!error && data) {
+        return NextResponse.json({ success: true, data: mapRowToApp(data) });
+      }
+      if (error) {
+        console.error('Supabase update application error:', error);
+      }
+    }
+
+    // 2. Fallback to in-memory store
+    if (!globalThis.__APPLICATIONS_STORE__) {
+      globalThis.__APPLICATIONS_STORE__ = [...INITIAL_APPLICATIONS];
+    }
+
+    const appIndex = globalThis.__APPLICATIONS_STORE__.findIndex(
+      (a) => (id && a.id === id) || (receiptNumber && a.receiptNumber === receiptNumber)
+    );
+
+    if (appIndex === -1) {
+      return NextResponse.json({ success: false, error: '수정할 지원서를 찾을 수 없습니다.' }, { status: 404 });
+    }
+
+    globalThis.__APPLICATIONS_STORE__[appIndex] = {
+      ...globalThis.__APPLICATIONS_STORE__[appIndex],
+      ...body,
+    };
+
+    return NextResponse.json({
+      success: true,
+      data: globalThis.__APPLICATIONS_STORE__[appIndex],
+    });
+  } catch (error) {
+    console.error('PUT /api/applications exception:', error);
+    return NextResponse.json({ success: false, error: '지원서 수정 중 오류가 발생했습니다.' }, { status: 500 });
+  }
+}
+
 export async function DELETE(request: Request) {
   try {
     const { searchParams } = new URL(request.url);

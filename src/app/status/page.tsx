@@ -22,6 +22,7 @@ import {
   Send,
   Eye,
   X,
+  Edit3,
 } from 'lucide-react';
 import ProfileCard from '@/components/ProfileCard';
 import { AdminApplication, ApplicationStatus } from '@/types/admin';
@@ -437,6 +438,17 @@ function StatusContent() {
                         data={application}
                         showWatermark={true}
                       />
+                    </div>
+
+                    {/* Edit Profile Card Button */}
+                    <div className="flex justify-center pt-2">
+                      <Link
+                        href={`/apply?receiptNumber=${encodeURIComponent(application.receiptNumber)}&mode=edit`}
+                        className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl font-black text-sm text-white bg-gradient-to-r from-[#623898] via-[#7E48BA] to-[#E12B70] hover:opacity-95 shadow-md active:scale-98 transition-all"
+                      >
+                        <Edit3 className="w-4 h-4" />
+                        <span>내 프로필 카드 정보 수정하기</span>
+                      </Link>
                     </div>
                   </div>
                 )}

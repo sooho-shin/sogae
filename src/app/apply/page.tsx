@@ -20,6 +20,9 @@ import {
   Heart,
   User,
   Search,
+  Edit3,
+  Eye,
+  RefreshCw,
 } from 'lucide-react';
 import {
   SETTING_REGIONS,
@@ -27,6 +30,7 @@ import {
   MBTI_LIST,
 } from '@/data/mockData';
 import { ApplicationFormData, AvailableRegion } from '@/types';
+import { AdminApplication } from '@/types/admin';
 import ProfileCard from '@/components/ProfileCard';
 import { findProfanity } from '@/utils/badWords';
 
@@ -82,6 +86,90 @@ function ApplyFormContent() {
 
   // Errors State
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
+
+  // Existing Card & Edit Mode State
+  const [existingApplication, setExistingApplication] = useState<AdminApplication | null>(null);
+  const [isEditMode, setIsEditMode] = useState<boolean>(false);
+  const [checkingExisting, setCheckingExisting] = useState<boolean>(true);
+
+  // Helper to fill form data from an existing application
+  const fillFormDataFromApp = (app: AdminApplication) => {
+    setFormData({
+      sessionId: app.sessionId || 'session-1on1-default',
+      region: app.region || '흑석동',
+      sessionTitle: app.sessionTitle || `${app.region} 1:1 맞춤 매칭`,
+      sessionDate: app.sessionDate || '상시 조율',
+      sessionTime: app.sessionTime || '주말/평일 맞춤',
+      ageGroup: app.ageGroup || '2030 직장인',
+      name: app.name || '',
+      nickname: app.nickname || app.name || '',
+      kakaoId: app.kakaoId || '',
+      gender: app.gender || 'male',
+      birthDate: app.birthDate || '',
+      birthYear: app.birthYear || '',
+      phone: app.phone || '',
+      location: app.location || '',
+      height: app.height || '175',
+      bodyType: app.bodyType || '보통',
+      bodyTypeFeature: app.bodyTypeFeature || '탄탄한 체형',
+      eyelid: app.eyelid || '무쌍',
+      drinking: app.drinking || '거의 안마심',
+      drinkingCapacity: app.drinkingCapacity || '거의 안마심',
+      smoking: app.smoking || '비흡연',
+      religion: app.religion || '무교',
+      profileImage: app.profileImage || null,
+      jobCategory: app.jobCategory || '대기업/중견기업',
+      companyName: app.companyName || '',
+      jobRole: app.jobRole || '',
+      mbti: app.mbti || 'ESTJ',
+      personality: app.personality || '',
+      hobbiesSpecialty: app.hobbiesSpecialty || '',
+      interests: Array.isArray(app.interests) ? app.interests : [],
+      idealType: app.idealType || '',
+      selfIntro: app.selfIntro || '',
+      intro: app.intro || '',
+      verificationType: app.verificationType || 'business_card',
+      verificationFile: app.verificationFile || null,
+      agreementSingle: true,
+      agreementManner: true,
+      agreementPrivacy: true,
+    });
+  };
+
+  // Check if user already registered a card
+  useEffect(() => {
+    async function checkExistingCard() {
+      if (typeof window === 'undefined') return;
+
+      const receipt = searchParams.get('receiptNumber') || localStorage.getItem('sogaeting_receipt');
+      const phone = localStorage.getItem('sogaeting_phone');
+      const query = receipt || phone;
+      const mode = searchParams.get('mode');
+
+      if (query) {
+        try {
+          const res = await fetch('/api/applications/status', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ query }),
+          });
+          const json = await res.json();
+          if (json.success && json.data) {
+            setExistingApplication(json.data);
+            if (mode === 'edit') {
+              fillFormDataFromApp(json.data);
+              setIsEditMode(true);
+            }
+          }
+        } catch (e) {
+          console.error('Failed to check existing card:', e);
+        }
+      }
+      setCheckingExisting(false);
+    }
+
+    checkExistingCard();
+  }, [searchParams]);
 
   // Initialize selected region from URL query
   useEffect(() => {
@@ -292,7 +380,7 @@ function ApplyFormContent() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Submit Handler
+  // Submit Handler (Create or Update)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateStep(4)) return;
@@ -301,6 +389,41 @@ function ApplyFormContent() {
     setIsSubmitting(true);
     setSubmitError('');
 
+    // If Edit Mode: update existing application via PUT
+    if (isEditMode && existingApplication) {
+      try {
+        const res = await fetch('/api/applications', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...formData,
+            id: existingApplication.id,
+            receiptNumber: existingApplication.receiptNumber,
+          }),
+        });
+
+        const json = await res.json();
+        if (!res.ok || !json.success) {
+          throw new Error(json.error || '프로필 카드 수정에 실패했습니다.');
+        }
+
+        setExistingApplication(json.data);
+        setIsEditMode(false);
+        setIsSubmitted(false);
+        alert('🎉 1:1 프로필 카드가 성공적으로 수정되었습니다!');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } catch (err: any) {
+        console.error('Failed to update application:', err);
+        const msg = err?.message || '프로필 카드 수정 중 오류가 발생했습니다.';
+        setSubmitError(msg);
+        alert(msg);
+      } finally {
+        setIsSubmitting(false);
+      }
+      return;
+    }
+
+    // New Application Creation via POST
     const randomNum = Math.floor(1000 + Math.random() * 9000);
     const receipt = `SG-1ON1-${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, '0')}${String(new Date().getDate()).padStart(2, '0')}-${randomNum}`;
 
@@ -327,6 +450,13 @@ function ApplyFormContent() {
 
       setReceiptNumber(receipt);
       setIsSubmitted(true);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('sogaeting_receipt', receipt);
+        localStorage.setItem('sogaeting_phone', formData.phone);
+      }
+      if (json.data) {
+        setExistingApplication(json.data);
+      }
 
       try {
         confetti({
@@ -432,19 +562,117 @@ function ApplyFormContent() {
     );
   }
 
-  // ================= APPLICATION FORM WIZARD =================
+  // ================= 0. CHECKING EXISTING LOADER =================
+  if (checkingExisting) {
+    return (
+      <div className="max-w-2xl mx-auto py-24 px-4 text-center space-y-3">
+        <div className="w-10 h-10 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin mx-auto" />
+        <p className="text-xs font-bold text-neutral-500">프로필 카드 등록 상태를 확인하는 중입니다...</p>
+      </div>
+    );
+  }
+
+  // ================= 1. ALREADY REGISTERED CARD VIEW SCREEN =================
+  if (existingApplication && !isEditMode) {
+    return (
+      <div className="max-w-2xl mx-auto py-10 px-4 sm:px-6 space-y-6">
+        <div className="bg-white rounded-3xl shadow-xl border border-purple-100 p-6 sm:p-8 text-center space-y-5">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-purple-50 border border-purple-200 text-xs font-black text-[#623898]">
+            <Check className="w-4 h-4 text-emerald-600" />
+            <span>이미 등록된 회원님의 1:1 프로필 카드가 있습니다</span>
+          </div>
+
+          <div className="space-y-1">
+            <h2 className="text-2xl sm:text-3xl font-black text-neutral-900">
+              {existingApplication.name}님의 기본 프로필 카드
+            </h2>
+            <p className="text-xs sm:text-sm text-neutral-500 max-w-md mx-auto leading-relaxed">
+              현재 이 카드 정보로 1:1 블라인드 매칭이 진행되고 있습니다. 정보 변경이 필요하시면 언제든 수정하실 수 있습니다.
+            </p>
+          </div>
+
+          {/* Current Profile Card Preview */}
+          <div className="py-2 flex justify-center">
+            <ProfileCard data={existingApplication} showWatermark={true} />
+          </div>
+
+          {/* Action Buttons */}
+          <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+            <button
+              type="button"
+              onClick={() => {
+                fillFormDataFromApp(existingApplication);
+                setIsEditMode(true);
+                setCurrentStep(1);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              className="w-full sm:w-auto flex-1 inline-flex items-center justify-center gap-2 px-6 py-4 rounded-2xl font-black text-sm text-white bg-gradient-to-r from-[#623898] to-[#8C52FF] hover:from-[#522884] hover:to-[#7637E4] shadow-md transition-all active:scale-98"
+            >
+              <Edit3 className="w-4 h-4" />
+              <span>내 프로필 카드 정보 수정하기</span>
+            </button>
+
+            <Link
+              href="/status"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-4 rounded-2xl font-bold text-sm text-purple-900 bg-purple-50 hover:bg-purple-100 border border-purple-200 transition-colors"
+            >
+              <Eye className="w-4 h-4" />
+              <span>내 매칭 & 호감 현황 보기</span>
+            </Link>
+          </div>
+
+          <div className="pt-3 border-t border-neutral-100">
+            <button
+              type="button"
+              onClick={() => {
+                setExistingApplication(null);
+                setIsEditMode(false);
+                setCurrentStep(1);
+              }}
+              className="text-xs font-bold text-neutral-400 hover:text-neutral-600 underline"
+            >
+              다른 사람으로 새로 등록하시겠습니까?
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ================= APPLICATION FORM WIZARD (NEW OR EDIT) =================
   return (
     <div className="max-w-2xl mx-auto py-10 px-4 sm:px-6">
+      {/* EDIT MODE BANNER */}
+      {isEditMode && (
+        <div className="mb-6 p-4 rounded-2xl bg-amber-50 border border-amber-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-amber-900 shadow-xs">
+          <div className="flex items-center gap-2 text-xs sm:text-sm font-bold">
+            <Edit3 className="w-4 h-4 text-amber-600 shrink-0" />
+            <span>
+              <strong>내 프로필 카드 수정 모드</strong>입니다. (접수번호: {existingApplication?.receiptNumber})
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setIsEditMode(false)}
+            className="text-xs font-black px-3.5 py-1.5 bg-white border border-amber-300 rounded-xl hover:bg-amber-100 text-amber-900 shadow-2xs"
+          >
+            수정 취소하고 카드 보기
+          </button>
+        </div>
+      )}
+
       {/* HEADER */}
       <div className="text-center mb-8 space-y-2">
         <span className="text-xs font-black px-3 py-1 rounded-full bg-purple-100 text-[#623898]">
-          1:1 PRIVATE MATCHING
+          {isEditMode ? 'EDIT PROFILE CARD' : '1:1 PRIVATE MATCHING'}
         </span>
         <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-neutral-900">
-          소개남녀 1:1 소개팅 프로필 카드 등록
+          {isEditMode ? '1:1 프로필 카드 정보 수정' : '소개남녀 1:1 소개팅 프로필 카드 등록'}
         </h1>
         <p className="text-xs sm:text-sm text-neutral-600">
-          프로필 카드를 정성껏 제작하여 이상형에게 제안해 드립니다. 둘 다 OK할 때만 카톡 ID를 교환합니다.
+          {isEditMode
+            ? '수정하신 정보는 검증 후 즉시 상대방에게 전달될 프로필 카드에 업데이트됩니다.'
+            : '프로필 카드를 정성껏 제작하여 이상형에게 제안해 드립니다. 둘 다 OK할 때만 카톡 ID를 교환합니다.'}
         </p>
       </div>
 
@@ -1111,12 +1339,12 @@ function ApplyFormContent() {
               {isSubmitting ? (
                 <>
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  <span>1:1 프로필 카드 등록 중...</span>
+                  <span>{isEditMode ? '프로필 카드 수정 저장 중...' : '1:1 프로필 카드 등록 중...'}</span>
                 </>
               ) : (
                 <>
                   <Sparkles className="w-4 h-4" />
-                  <span>1:1 프로필 카드 최종 등록하기</span>
+                  <span>{isEditMode ? '1:1 프로필 카드 수정 완료하기' : '1:1 프로필 카드 최종 등록하기'}</span>
                 </>
               )}
             </button>

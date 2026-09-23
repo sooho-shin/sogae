@@ -1,11 +1,22 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Heart, Menu, X, ShieldCheck, Sparkles } from 'lucide-react';
+import { Heart, Menu, X, ShieldCheck, Sparkles, Edit3 } from 'lucide-react';
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [hasRegisteredCard, setHasRegisteredCard] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const receipt = localStorage.getItem('sogaeting_receipt');
+      const phone = localStorage.getItem('sogaeting_phone');
+      if (receipt || phone) {
+        setHasRegisteredCard(true);
+      }
+    }
+  }, []);
 
   return (
     <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-purple-100 shadow-xs">
@@ -85,8 +96,17 @@ export default function Header() {
               href="/apply"
               className="relative inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full font-bold text-sm text-white bg-gradient-to-r from-[#623898] to-[#8C52FF] hover:from-[#532E82] hover:to-[#7B40EF] shadow-md shadow-purple-900/15 hover:shadow-lg hover:shadow-purple-900/25 active:scale-98 transition-all"
             >
-              <Sparkles className="w-4 h-4" />
-              1:1 프로필 카드 등록
+              {hasRegisteredCard ? (
+                <>
+                  <Edit3 className="w-4 h-4" />
+                  <span>내 카드 보기 / 수정</span>
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-4 h-4" />
+                  <span>1:1 프로필 카드 등록</span>
+                </>
+              )}
             </Link>
           </div>
 
@@ -102,7 +122,7 @@ export default function Header() {
               href="/apply"
               className="px-3 py-1 text-xs font-bold text-white bg-[#623898] rounded-full shadow-xs"
             >
-              신청
+              {hasRegisteredCard ? '내 카드' : '신청'}
             </Link>
             <button
               type="button"
