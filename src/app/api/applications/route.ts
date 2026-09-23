@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { INITIAL_APPLICATIONS } from '@/data/initialApplications';
 import { AdminApplication, ApplicationStatus } from '@/types/admin';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
+import { validateProfanityInObject } from '@/utils/badWords';
 
 // Global in-memory storage fallback
 declare global {
@@ -90,6 +91,19 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
+
+    // 0. 금칙어 / 음란성 입력 서버사이드 검증
+    const profanityCheck = validateProfanityInObject(body);
+    if (!profanityCheck.valid) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: `${profanityCheck.fieldName} 항목에 부적절한 단어('${profanityCheck.badWord}')가 포함되어 있어 등록할 수 없습니다.`,
+        },
+        { status: 400 }
+      );
+    }
+
     const newApp: AdminApplication = {
       ...body,
       id: body.id || `app-${Date.now()}`,

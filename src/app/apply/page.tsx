@@ -28,6 +28,7 @@ import {
 } from '@/data/mockData';
 import { ApplicationFormData, AvailableRegion } from '@/types';
 import ProfileCard from '@/components/ProfileCard';
+import { findProfanity } from '@/utils/badWords';
 
 function ApplyFormContent() {
   const searchParams = useSearchParams();
@@ -98,8 +99,34 @@ function ApplyFormContent() {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [submitError, setSubmitError] = useState<string>('');
 
-  // HTML5 Canvas 기반 고효율 이미지 리사이징 & 압축 (원본 10MB -> 약 100~150KB)
-  const compressImage = (file: File, maxWidth = 800, quality = 0.82): Promise<string> => {
+  // HTML5 Canvas 기반 고효율 이미지 리사이징 & 압축 (EXIF 회전 보정 및 100~150KB 최적화)
+  const compressImage = async (file: File, maxWidth = 800, quality = 0.82): Promise<string> => {
+    // 1. 최신 브라우저: createImageBitmap with imageOrientation 'from-image' (EXIF 자동 정방향 보정)
+    if (typeof window !== 'undefined' && 'createImageBitmap' in window) {
+      try {
+        const bitmap = await (createImageBitmap as any)(file, { imageOrientation: 'from-image' });
+        const canvas = document.createElement('canvas');
+        let { width, height } = bitmap;
+
+        if (width > maxWidth) {
+          height = Math.round((height * maxWidth) / width);
+          width = maxWidth;
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(bitmap, 0, 0, width, height);
+          return canvas.toDataURL('image/jpeg', quality);
+        }
+      } catch (e) {
+        console.warn('createImageBitmap fallback to FileReader:', e);
+      }
+    }
+
+    // 2. Fallback: FileReader + Image
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = (event) => {
@@ -213,12 +240,30 @@ function ApplyFormContent() {
       if (!formData.profileImage) {
         errs.profileImage = '1:1 프로필 카드 제작을 위해 본인 얼굴 사진을 반드시 등록해 주세요.';
       }
+
+      // 비속어/음란어 검사 (STEP 2)
+      const badName = findProfanity(formData.name);
+      if (badName) errs.name = `부적절한 단어('${badName}')가 포함되어 있습니다.`;
+      const badNick = findProfanity(formData.nickname);
+      if (badNick) errs.nickname = `부적절한 단어('${badNick}')가 포함되어 있습니다.`;
     } else if (step === 3) {
       if (!formData.jobRole.trim()) errs.jobRole = '직업 또는 직무를 입력해주세요. (예: 행정직, 백엔드 개발자)';
       if (!formData.personality.trim()) errs.personality = '프로필 카드에 들어갈 나의 성격을 한 줄 이상 적어주세요.';
       if (!formData.hobbiesSpecialty.trim()) errs.hobbiesSpecialty = '취미 및 특기를 입력해주세요. (예: 헬스, 피아노, 클라이밍)';
       if (!formData.idealType.trim()) errs.idealType = '희망하시는 이상형을 상세히 적어주세요.';
       if (!formData.selfIntro.trim()) errs.selfIntro = '상대방에게 전달될 자기소개를 정성껏 작성해주세요.';
+
+      // 비속어/음란어 검사 (STEP 3)
+      const badJob = findProfanity(formData.jobRole) || findProfanity(formData.companyName);
+      if (badJob) errs.jobRole = `직업 정보에 부적절한 단어('${badJob}')가 포함되어 있습니다.`;
+      const badPers = findProfanity(formData.personality);
+      if (badPers) errs.personality = `성격 소개에 부적절한 단어('${badPers}')가 포함되어 있습니다.`;
+      const badHobby = findProfanity(formData.hobbiesSpecialty);
+      if (badHobby) errs.hobbiesSpecialty = `취미/특기에 부적절한 단어('${badHobby}')가 포함되어 있습니다.`;
+      const badIdeal = findProfanity(formData.idealType);
+      if (badIdeal) errs.idealType = `이상형 조건에 부적절한 단어('${badIdeal}')가 포함되어 있습니다.`;
+      const badIntro = findProfanity(formData.selfIntro);
+      if (badIntro) errs.selfIntro = `자기소개에 부적절한 단어('${badIntro}')가 포함되어 있습니다.`;
     } else if (step === 4) {
       if (!formData.agreementSingle) {
         errs.agreementSingle = '싱글(미혼) 서약에 동의하셔야 신청이 가능합니다.';
