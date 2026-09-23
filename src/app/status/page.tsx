@@ -28,8 +28,6 @@ import ProfileCard from '@/components/ProfileCard';
 import { AdminApplication, ApplicationStatus } from '@/types/admin';
 import { MatchRequest } from '@/types';
 import { toPng } from 'html-to-image';
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
 
 function StatusContent() {
   const searchParams = useSearchParams();
@@ -202,8 +200,6 @@ function StatusContent() {
 
   return (
     <div className="min-h-screen bg-[#FAF9FD] text-neutral-900 flex flex-col font-sans">
-      <Header />
-
       <main className="flex-1 pb-24">
         {/* Hero Header */}
         <section className="bg-gradient-to-b from-[#2E1065] via-[#4C1D95] to-[#5B21B6] text-white pt-12 pb-16 px-4 sm:px-6">
@@ -793,8 +789,6 @@ function StatusContent() {
           </div>
         </div>
       )}
-
-      <Footer />
     </div>
   );
 }

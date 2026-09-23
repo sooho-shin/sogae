@@ -3,8 +3,6 @@
 import React, { useState, useEffect, useMemo, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
 import ProfileCard from '@/components/ProfileCard';
 import { AdminApplication } from '@/types/admin';
 import { AvailableRegion, MatchRequest } from '@/types';
@@ -185,8 +183,6 @@ function ProfilesContent() {
 
   return (
     <div className="min-h-screen bg-[#FAF9FD] text-neutral-900 flex flex-col font-sans">
-      <Header />
-
       <main className="flex-1 pb-24">
         {/* Hero Section */}
         <section className="relative bg-gradient-to-b from-[#2E1065] via-[#4C1D95] to-[#5B21B6] text-white pt-12 pb-16 px-4 sm:px-6">
@@ -565,8 +561,6 @@ function ProfilesContent() {
           </div>
         </div>
       )}
-
-      <Footer />
     </div>
   );
 }
